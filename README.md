@@ -1,18 +1,62 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# HH.ru Auto Apply
+
+An automated job application system for HH.ru platform.
+
+## Features
+
+- Automated job applications on HH.ru
+- Job search and filtering
+- Application history tracking
+- User authentication
+- Settings management
+
+## Tech Stack
+
+- Next.js 14
+- TypeScript
+- Tailwind CSS
+- Node.js/Express (Backend)
+- MongoDB (Database)
 
 ## Getting Started
 
-First, run the development server:
+1. Clone the repository
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+3. Create a `.env.local` file in the root directory with the following variables:
+   ```
+   HH_API_KEY=your_api_key
+   HH_API_SECRET=your_api_secret
+   MONGODB_URI=your_mongodb_uri
+   ```
+4. Run the development server:
+   ```bash
+   npm run dev
+   ```
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+## Project Structure
+
 ```
+hh-auto-apply/
+├── app/                 # Next.js app directory
+├── components/          # React components
+├── lib/                 # Utility functions
+├── api/                 # API routes
+├── types/              # TypeScript types
+└── public/             # Static files
+```
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch
+3. Commit your changes
+4. Push to the branch
+5. Create a new Pull Request
+
+This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
 

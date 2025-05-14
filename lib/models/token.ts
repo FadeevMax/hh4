@@ -1,0 +1,147 @@
+import LocalStorage from '../db/local-storage';
+
+// Define token interface
+export interface Token {
+  id: string;
+  accessToken: string;
+  refreshToken: string;
+  expires: number; // Timestamp when the token expires
+  userId: string;
+}
+
+// Create token storage
+const tokenStorage = new LocalStorage<Token>('tokens');
+
+export default {
+  // Find token by user ID
+  async findByUserId(userId: string): Promise<Token | null> {
+    const tokens = await tokenStorage.find({ userId });
+    return tokens.length > 0 ? tokens[0] : null;
+  },
+  
+  // Get the latest valid token for a user
+  async getLatestToken(userId: string): Promise<Token | null> {
+    const token = await this.findByUserId(userId);
+    
+    if (!token) {
+      return null;
+    }
+    
+    // Check if token is expired
+    if (token.expires <= Date.now()) {
+      try {
+        // Token is expired, try to refresh it
+        const refreshed = await this.refreshToken(token);
+        
+        if (!refreshed) {
+          // Couldn't refresh the token
+          console.error('Could not refresh expired token');
+          return null;
+        }
+        
+        // Get the refreshed token
+        return await this.findByUserId(userId);
+      } catch (error) {
+        console.error('Error refreshing token:', error);
+        return null;
+      }
+    }
+    
+    return token;
+  },
+  
+  // Refresh a token with the HH.ru API
+  async refreshToken(token: Token): Promise<boolean> {
+    if (!token || !token.refreshToken) {
+      return false;
+    }
+    
+    try {
+      console.log('Refreshing token for user:', token.userId);
+      
+      // Set up parameters for token refresh
+      const clientId = process.env.HH_API_KEY || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
+      const clientSecret = process.env.HH_API_SECRET || 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
+      
+      // Create URL-encoded form body for refresh request
+      const params = new URLSearchParams({
+        grant_type: 'refresh_token',
+        client_id: clientId,
+        client_secret: clientSecret,
+        refresh_token: token.refreshToken,
+      });
+      
+      // Make the token refresh request to HH.ru
+      const refreshResponse = await fetch('https://api.hh.ru/token', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: params,
+      });
+      
+      if (!refreshResponse.ok) {
+        const errorData = await refreshResponse.json();
+        console.error('Error refreshing token:', errorData);
+        
+        // If refresh token is expired or invalid, remove it
+        if (refreshResponse.status === 400 && 
+            (errorData.error === 'invalid_grant' || errorData.error === 'invalid_request')) {
+          await this.deleteToken(token.userId);
+        }
+        
+        return false;
+      }
+      
+      const refreshData = await refreshResponse.json();
+      
+      // Save the new tokens
+      await this.saveToken(
+        token.userId, 
+        refreshData.access_token, 
+        refreshData.refresh_token, 
+        refreshData.expires_in
+      );
+      
+      return true;
+    } catch (error) {
+      console.error('Error in token refresh:', error);
+      return false;
+    }
+  },
+  
+  // Create or update token
+  async saveToken(userId: string, accessToken: string, refreshToken: string, expiresIn: number): Promise<Token> {
+    const existingToken = await this.findByUserId(userId);
+    
+    const tokenData = {
+      accessToken,
+      refreshToken,
+      expires: Date.now() + (expiresIn * 1000), // Convert seconds to milliseconds
+      userId
+    };
+    
+    if (existingToken) {
+      return (await tokenStorage.update(existingToken.id, tokenData))!;
+    } else {
+      return await tokenStorage.create(tokenData);
+    }
+  },
+  
+  // Check if token is valid
+  async isValid(userId: string): Promise<boolean> {
+    const token = await this.getLatestToken(userId);
+    return token !== null;
+  },
+  
+  // Delete token
+  async deleteToken(userId: string): Promise<boolean> {
+    const token = await this.findByUserId(userId);
+    
+    if (!token) {
+      return false;
+    }
+    
+    return tokenStorage.delete(token.id);
+  }
+}; 
