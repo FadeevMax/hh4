@@ -23,7 +23,7 @@ export default function AuthCallback() {
         // Check the stored state
         const storedState = localStorage.getItem('oauth_state');
         localStorage.removeItem('oauth_state'); // clear it for security
-
+        
         if (!code) {
           throw new Error('Отсутствует код авторизации');
         }
