@@ -34,7 +34,7 @@ export default function Login() {
     const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
     
     // Always use the exact same redirect URI format throughout the application
-    const redirectUri = 'http://localhost:3000/auth/callback';
+    const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
     
     // Create the full authorization URL with proper encoding
     const authUrl = 

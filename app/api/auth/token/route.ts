@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const clientId = process.env.HH_API_KEY || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
     const clientSecret = process.env.HH_API_SECRET || 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
     // Explicitly set the full, exact redirect URI
-    const redirectUri = 'http://localhost:3000/auth/callback';
+    const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
     
     console.log('Using redirect URI:', redirectUri);
     console.log('Authorization code:', code);

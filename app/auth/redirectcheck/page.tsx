@@ -1,8 +1,8 @@
 'use client';
 
 export default function RedirectCheck() {
-  // Calculate the encoded URL for clarity
-  const redirectUri = 'http://localhost:3000/auth/callback';
+  // Use environment variable with fallback
+  const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
   const encodedUri = encodeURIComponent(redirectUri);
 
   return (
