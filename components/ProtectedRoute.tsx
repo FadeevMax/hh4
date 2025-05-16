@@ -10,90 +10,89 @@ export default function ProtectedRoute({ children }: { children: React.ReactNode
   const [authError, setAuthError] = useState<string | null>(null);
 
   useEffect(() => {
-    checkAuthentication();
-  }, [router]);
-
-  const checkAuthentication = async () => {
-    const accessToken = localStorage.getItem('accessToken');
-    const refreshToken = localStorage.getItem('refreshToken');
-    const user = localStorage.getItem('user');
-    
-    if (!accessToken || !user) {
-      setIsAuthenticated(false);
-      setAuthError('Вы не авторизованы. Пожалуйста, войдите.');
-      router.push('/login');
-      return;
-    }
-    
-    // Check token expiration
-    const tokenExpirationStr = localStorage.getItem('tokenExpiration');
-    
-    if (tokenExpirationStr) {
-      const tokenExpiration = parseInt(tokenExpirationStr, 10);
+    const checkAuthentication = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      const refreshToken = localStorage.getItem('refreshToken');
+      const user = localStorage.getItem('user');
       
-      if (tokenExpiration < Date.now()) {
-        // Token has expired, try to refresh it
-        if (refreshToken && user) {
-          try {
-            const userData = JSON.parse(user);
-            
-            const refreshResponse = await fetch('/api/auth/refresh', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json'
-              },
-              body: JSON.stringify({
-                userId: userData.id
-              })
-            });
-            
-            if (refreshResponse.ok) {
-              const refreshData = await refreshResponse.json();
-              
-              // Token refreshed successfully
-              if (refreshData.success) {
-                // Update expiration in localStorage
-                const newExpiration = Date.now() + (refreshData.expiresIn * 1000);
-                localStorage.setItem('tokenExpiration', newExpiration.toString());
-                
-                setIsAuthenticated(true);
-                setIsLoading(false);
-                return;
-              }
-            } else {
-              const errorData = await refreshResponse.json();
-              
-              // If refresh token is expired, we need to re-authenticate
-              if (errorData.requireReauth) {
-                localStorage.removeItem('accessToken');
-                localStorage.removeItem('refreshToken');
-                localStorage.removeItem('tokenExpiration');
-                
-                setIsAuthenticated(false);
-                setAuthError('Ваша сессия истекла. Пожалуйста, войдите снова.');
-                setIsLoading(false);
-                return;
-              }
-            }
-          } catch (error) {
-            console.error('Error refreshing token:', error);
-          }
-        }
-        
-        // If we get here, refresh failed
+      if (!accessToken || !user) {
         setIsAuthenticated(false);
-        setAuthError('Ваша сессия истекла. Пожалуйста, войдите снова.');
+        setAuthError('Вы не авторизованы. Пожалуйста, войдите.');
+        router.push('/login');
+        return;
+      }
+      
+      // Check token expiration
+      const tokenExpirationStr = localStorage.getItem('tokenExpiration');
+      
+      if (tokenExpirationStr) {
+        const tokenExpiration = parseInt(tokenExpirationStr, 10);
+        
+        if (tokenExpiration < Date.now()) {
+          // Token has expired, try to refresh it
+          if (refreshToken && user) {
+            try {
+              const userData = JSON.parse(user);
+              
+              const refreshResponse = await fetch('/api/auth/refresh', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                  userId: userData.id
+                })
+              });
+              
+              if (refreshResponse.ok) {
+                const refreshData = await refreshResponse.json();
+                
+                // Token refreshed successfully
+                if (refreshData.success) {
+                  // Update expiration in localStorage
+                  const newExpiration = Date.now() + (refreshData.expiresIn * 1000);
+                  localStorage.setItem('tokenExpiration', newExpiration.toString());
+                  
+                  setIsAuthenticated(true);
+                  setIsLoading(false);
+                  return;
+                }
+              } else {
+                const errorData = await refreshResponse.json();
+                
+                // If refresh token is expired, we need to re-authenticate
+                if (errorData.requireReauth) {
+                  localStorage.removeItem('accessToken');
+                  localStorage.removeItem('refreshToken');
+                  localStorage.removeItem('tokenExpiration');
+                  
+                  setIsAuthenticated(false);
+                  setAuthError('Ваша сессия истекла. Пожалуйста, войдите снова.');
+                  setIsLoading(false);
+                  return;
+                }
+              }
+            } catch (error) {
+              console.error('Error refreshing token:', error);
+            }
+          }
+          
+          // If we get here, refresh failed
+          setIsAuthenticated(false);
+          setAuthError('Ваша сессия истекла. Пожалуйста, войдите снова.');
+        } else {
+          // Token is still valid
+          setIsAuthenticated(true);
+        }
       } else {
-        // Token is still valid
+        // No expiration stored, assume token is valid
         setIsAuthenticated(true);
       }
-    } else {
-      // No expiration stored, assume token is valid
-      setIsAuthenticated(true);
-    }
-    
-    setIsLoading(false);
-  };
+      
+      setIsLoading(false);
+    };
+    checkAuthentication();
+  }, [router]);
 
   const handleReAuthenticate = () => {
     router.push('/login');

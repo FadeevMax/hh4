@@ -69,7 +69,7 @@ export async function GET(request: NextRequest) {
       found: data.found || 0
     });
 
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: 'Internal server error processing resumes' },
       { status: 500 }

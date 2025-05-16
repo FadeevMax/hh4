@@ -17,7 +17,7 @@ export interface Application {
 // Create application storage
 const applicationStorage = new LocalStorage<Application>('applications');
 
-export default {
+const applicationModel = {
   // Save a new application
   async saveApplication(applicationData: Omit<Application, 'id'>): Promise<Application> {
     return applicationStorage.create(applicationData);
@@ -64,4 +64,6 @@ export default {
       cancelled: applications.filter(app => app.status === 'cancelled').length,
     };
   }
-}; 
+};
+
+export default applicationModel; 

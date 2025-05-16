@@ -15,7 +15,7 @@ export interface User {
 // Create user storage
 const userStorage = new LocalStorage<User>('users');
 
-export default {
+const userModel = {
   // Find user by ID
   async findById(id: string): Promise<User | null> {
     return userStorage.findById(id);
@@ -58,4 +58,6 @@ export default {
   async getAllUsers(): Promise<User[]> {
     return userStorage.findAll();
   }
-}; 
+};
+
+export default userModel; 

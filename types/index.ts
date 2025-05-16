@@ -28,6 +28,11 @@ export interface HHVacancy {
   employment: {
     name: string;
   };
+  // Optional fields for UI/auto-apply logic
+  title?: string;
+  profession?: string;
+  success?: boolean;
+  response?: { [key: string]: unknown };
 }
 
 // Application Types

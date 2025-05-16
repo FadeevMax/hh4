@@ -110,7 +110,7 @@ export function useAuth() {
   }, [authState.isLoggedIn, authState.user]);
 
   // Process HH.ru OAuth token response
-  const processHHToken = useCallback(async (code: string, state: string | null) => {
+  const processHHToken = useCallback(async (code: string) => {
     try {
       const response = await fetch('/api/auth/token', {
         method: 'POST',
@@ -148,6 +148,27 @@ export function useAuth() {
       throw error;
     }
   }, []);
+
+  // Logout
+  const logout = useCallback(() => {
+    // Clear localStorage
+    localStorage.removeItem('user');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    
+    // Reset auth state
+    setAuthState({
+      isLoggedIn: false,
+      isLoading: false,
+      user: null,
+      hhConnected: false,
+      accessToken: null,
+      refreshToken: null,
+    });
+    
+    // Redirect to login page
+    router.push('/login');
+  }, [router]);
 
   // Refresh the access token
   const refreshToken = useCallback(async () => {
@@ -196,28 +217,7 @@ export function useAuth() {
       console.error('Token refresh error:', error);
       throw error;
     }
-  }, [authState.refreshToken, authState.user]);
-
-  // Logout
-  const logout = useCallback(() => {
-    // Clear localStorage
-    localStorage.removeItem('user');
-    localStorage.removeItem('accessToken');
-    localStorage.removeItem('refreshToken');
-    
-    // Reset auth state
-    setAuthState({
-      isLoggedIn: false,
-      isLoading: false,
-      user: null,
-      hhConnected: false,
-      accessToken: null,
-      refreshToken: null,
-    });
-    
-    // Redirect to login page
-    router.push('/login');
-  }, [router]);
+  }, [authState.refreshToken, authState.user, logout]);
 
   return {
     ...authState,

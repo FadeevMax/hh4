@@ -4,35 +4,20 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import JobFilterConfig from '@/components/JobFilterConfig';
-import AutoApplicator from '@/components/AutoApplicator';
-import ApplicationHistory from '@/components/ApplicationHistory';
+import type { HHVacancy } from '@/types';
 
-interface JobVacancy {
+interface User {
   id: string;
-  name: string;
-  employer: {
-    id: string;
-    name: string;
-  };
-  salary: {
-    from: number | null;
-    to: number | null;
-    currency: string;
-  } | null;
-  area: {
-    id: string;
-    name: string;
-  };
-  published_at: string;
-  alternate_url: string;
-  appliedAt?: string;
+  firstName?: string;
+  lastName?: string;
+  email?: string;
 }
 
 export default function Dashboard() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
+  const [user, setUser] = useState<User | null>(null);
   const [activeTab, setActiveTab] = useState<string>('welcome'); 
-  const [vacancies, setVacancies] = useState<JobVacancy[]>([]);
+  const [vacancies, setVacancies] = useState<HHVacancy[]>([]);
   const [searchStatus, setSearchStatus] = useState<{
     status: 'idle' | 'loading' | 'success' | 'error';
     message?: string;
@@ -45,7 +30,7 @@ export default function Dashboard() {
     if (userData) {
       try {
         setUser(JSON.parse(userData));
-      } catch (e) {
+      } catch {
         console.error("Failed to parse user data");
       }
     } else {
@@ -72,7 +57,7 @@ export default function Dashboard() {
     router.push('/login');
   };
   
-  const handleSearchResults = (results: JobVacancy[]) => {
+  const handleSearchResults = (results: HHVacancy[]) => {
     setVacancies(results);
     if (results.length > 0) {
       setActiveTab('results');
@@ -98,10 +83,9 @@ export default function Dashboard() {
       setActiveTab('autoApply');
       setComponentToRender(
         <AutoApplicator 
-          userId={user?.id}
+          userId={user?.id ?? ''}
           filterActive={filterActive}
           onStatusChange={handleStatusChange}
-          onApplicationComplete={() => {}}
         />
       );
     });
@@ -113,14 +97,14 @@ export default function Dashboard() {
       setActiveTab('history');
       setComponentToRender(
         <ApplicationHistory 
-          userId={user?.id}
+          userId={user?.id ?? ''}
           onStatusChange={handleStatusChange}
         />
       );
     });
   };
 
-  const formatSalary = (salary: JobVacancy['salary']) => {
+  const formatSalary = (salary: HHVacancy['salary']) => {
     if (!salary) return 'Не указана';
     
     const { from, to, currency } = salary;
@@ -167,16 +151,12 @@ export default function Dashboard() {
                   <div>
                     <span className="font-medium">ID на HeadHunter:</span> {user.id}
                   </div>
-                  {user.firstName && (
-                    <div>
-                      <span className="font-medium">Имя:</span> {user.firstName}
-                    </div>
-                  )}
-                  {user.lastName && (
-                    <div>
-                      <span className="font-medium">Фамилия:</span> {user.lastName}
-                    </div>
-                  )}
+                  <div>
+                    <span className="font-medium">Имя:</span> {String(user.firstName || '')}
+                  </div>
+                  <div>
+                    <span className="font-medium">Фамилия:</span> {String(user.lastName || '')}
+                  </div>
                   {user.email && (
                     <div>
                       <span className="font-medium">Email:</span> {user.email}

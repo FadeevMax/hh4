@@ -12,7 +12,6 @@ if (!fs.existsSync(DATA_DIR)) {
 // Generic type for stored objects
 interface StoredObject {
   id: string;
-  [key: string]: any;
 }
 
 // Storage class for working with a specific collection
@@ -39,7 +38,7 @@ class LocalStorage<T extends StoredObject> {
     const items = await this.findAll();
     
     return items.filter(item => {
-      return Object.entries(query).every(([key, value]) => item[key] === value);
+      return Object.entries(query).every(([key, value]) => (item as Record<string, unknown>)[key] === value);
     });
   }
   

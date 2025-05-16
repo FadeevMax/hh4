@@ -89,7 +89,7 @@ export async function POST(request: NextRequest) {
     let applyData = null;
     try {
       applyData = applyText ? JSON.parse(applyText) : null;
-    } catch (e) {
+    } catch {
       applyData = { raw: applyText };
     }
 

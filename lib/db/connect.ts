@@ -8,6 +8,7 @@ interface MongooseCache {
 
 // Extend global type to include mongoose cache
 declare global {
+  // eslint-disable-next-line no-var
   var mongoose: MongooseCache;
 }
 
@@ -15,9 +16,7 @@ const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hh-aut
 
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 
-if (!cached) {
-  cached = global.mongoose = { conn: null, promise: null };
-}
+cached = global.mongoose = { conn: null, promise: null };
 
 async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) {
@@ -30,7 +29,7 @@ async function dbConnect(): Promise<typeof mongoose> {
     };
 
     console.log('Connecting to MongoDB...');
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose) => {
+    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose: typeof import('mongoose')) => {
       console.log('MongoDB connected successfully');
       return mongoose;
     });

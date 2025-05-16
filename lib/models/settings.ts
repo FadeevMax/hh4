@@ -47,7 +47,7 @@ const defaultAutoApplyRules: AutoApplyRule = {
   blacklistedCompanies: [],
 };
 
-export default {
+const settingsModel = {
   // Find settings by user ID
   async findByUserId(userId: string): Promise<Settings | null> {
     const settingsList = await settingsStorage.find({ userId });
@@ -146,4 +146,6 @@ export default {
     
     return settings.dailyApplicationCount >= settings.autoApplyRules.maxApplicationsPerDay;
   }
-}; 
+};
+
+export default settingsModel; 

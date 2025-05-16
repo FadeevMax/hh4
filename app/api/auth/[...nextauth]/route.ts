@@ -1,5 +1,7 @@
-import NextAuth, { DefaultSession, NextAuthConfig } from 'next-auth';
+import NextAuth, { DefaultSession } from 'next-auth';
 import { HHAuth } from '@/lib/auth';
+import type { JWT } from 'next-auth/jwt';
+import type { Account, Session } from 'next-auth';
 
 declare module 'next-auth' {
   interface Session extends DefaultSession {
@@ -29,7 +31,8 @@ const handler = NextAuth({
       authorization: HHAuth.getAuthUrl(),
       token: {
         url: 'https://hh.ru/oauth/token',
-        async request({ params }: { params: { code: string } }) {
+        async request({ params }: { params: { code?: string } }) {
+          if (!params.code) throw new Error('No code provided');
           const response = await HHAuth.getAccessToken(params.code);
           return {
             tokens: {
@@ -42,7 +45,8 @@ const handler = NextAuth({
       },
       userinfo: {
         url: 'https://api.hh.ru/me',
-        async request({ tokens }: { tokens: TokenSet }) {
+        async request({ tokens }: { tokens: TokenSet | { access_token?: string } }) {
+          if (!tokens.access_token) throw new Error('No access_token provided');
           return HHAuth.getUserInfo(tokens.access_token);
         },
       },
@@ -58,7 +62,7 @@ const handler = NextAuth({
     },
   ],
   callbacks: {
-    async jwt({ token, account }) {
+    async jwt({ token, account }: { token: JWT; account?: Account | null }) {
       if (account) {
         token.accessToken = account.access_token;
         token.refreshToken = account.refresh_token;
@@ -66,8 +70,8 @@ const handler = NextAuth({
       }
       return token;
     },
-    async session({ session, token }) {
-      session.accessToken = token.accessToken;
+    async session({ session, token }: { session: Session; token: JWT }) {
+      session.accessToken = token.accessToken as string | undefined;
       return session;
     },
   },
@@ -75,6 +79,6 @@ const handler = NextAuth({
     signIn: '/auth/signin',
     error: '/auth/error',
   },
-} satisfies NextAuthConfig);
+});
 
 export { handler as GET, handler as POST }; 

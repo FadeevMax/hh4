@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import TokenModel from '@/lib/models/token';
 
+export const dynamic = "force-dynamic";
+
 export async function GET(request: NextRequest) {
   // Add a delay to prevent overloading the API with repeated requests
   await new Promise(resolve => setTimeout(resolve, 500));
@@ -66,10 +68,22 @@ export async function GET(request: NextRequest) {
     
     // Process and return the application data
     // Note: This would need to be adjusted based on the actual HH.ru API response format
-    const applications = data.items || [];
-    
+    type HHApplicationItem = {
+      id: string;
+      vacancy?: {
+        id: string;
+        name: string;
+        employer?: { name: string };
+        alternate_url?: string;
+      };
+      state?: { name: string };
+      created_at?: string;
+      updated_at?: string;
+      has_updates?: boolean;
+    };
+    const applications: HHApplicationItem[] = data.items || [];
     return NextResponse.json({
-      applications: applications.map((item: any) => ({
+      applications: applications.map((item) => ({
         id: item.id,
         vacancyId: item.vacancy ? item.vacancy.id : 'unknown',
         vacancyName: item.vacancy ? item.vacancy.name : 'Unknown position',

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import type { HHVacancy } from '@/types';
 
 interface JobFilter {
   jobTitle: string;
@@ -11,7 +12,7 @@ interface JobFilter {
 }
 
 interface JobFilterConfigProps {
-  onSearchResults?: (results: any[]) => void;
+  onSearchResults?: (results: HHVacancy[]) => void;
   onStatusChange?: (status: 'idle' | 'loading' | 'success' | 'error', message?: string) => void;
   onFilterSave?: () => void;
   onFilterReset?: () => void;
@@ -33,9 +34,9 @@ export default function JobFilterConfig({
     autoApply: false
   });
   const [isSearching, setIsSearching] = useState(false);
-  const [resumes, setResumes] = useState<any[]>([]);
+  const [resumes, setResumes] = useState<HHVacancy[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
-  const [autoApplyResults, setAutoApplyResults] = useState<any[]>([]);
+  const [autoApplyResults, setAutoApplyResults] = useState<HHVacancy[]>([]);
   
   // Load saved filter from localStorage on initial load
   useEffect(() => {
@@ -231,7 +232,7 @@ export default function JobFilterConfig({
       }
       
       // Fallback for items
-      let results = Array.isArray(apiData?.items) ? apiData.items : [];
+      let results: HHVacancy[] = Array.isArray(apiData?.items) ? apiData.items : [];
       
       if (filter.keywordsExclude) {
         const excludedKeywords = filter.keywordsExclude
@@ -240,7 +241,7 @@ export default function JobFilterConfig({
           .filter((kw: string) => kw);
         
         if (excludedKeywords.length > 0) {
-          results = results.filter((vacancy: any) => {
+          results = results.filter((vacancy: HHVacancy) => {
             const name = vacancy.name.toLowerCase();
             return !excludedKeywords.some((kw: string) => name.includes(kw));
           });
@@ -257,7 +258,7 @@ export default function JobFilterConfig({
       
       // Auto-apply logic
       if (filter.autoApply && selectedResumeId && results.length > 0) {
-        const applyResults: any[] = [];
+        const applyResults: HHVacancy[] = [];
         for (const vacancy of results) {
           try {
             const applyRes = await fetch('/api/vacancies/apply', {
@@ -273,13 +274,13 @@ export default function JobFilterConfig({
             });
             const applyData = await applyRes.json();
             applyResults.push({
-              vacancy,
+              ...vacancy,
               success: applyRes.ok,
               response: applyData
             });
           } catch (err) {
             applyResults.push({
-              vacancy,
+              ...vacancy,
               success: false,
               response: { error: err instanceof Error ? err.message : String(err) }
             });
@@ -316,7 +317,7 @@ export default function JobFilterConfig({
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
           >
             {resumes.length === 0 && <option value="">Нет резюме</option>}
-            {resumes.map(r => (
+            {resumes.map((r) => (
               <option key={r.id} value={r.id}>{r.title || r.profession || r.id}</option>
             ))}
           </select>
@@ -482,9 +483,9 @@ export default function JobFilterConfig({
           <div className="mt-6">
             <h3 className="text-lg font-semibold mb-2">Результаты автоотклика</h3>
             <ul className="space-y-2">
-              {autoApplyResults.map((res, idx) => (
-                <li key={res.vacancy.id} className={res.success ? 'text-green-700' : 'text-red-700'}>
-                  <span className="font-medium">{res.vacancy.name}</span> — {res.success ? 'Отклик отправлен' : `Ошибка: ${res.response?.error || 'Неизвестная ошибка'}`}
+              {autoApplyResults.map((res) => (
+                <li key={res.id} className={res.success ? 'text-green-700' : 'text-red-700'}>
+                  <span className="font-medium">{res.name}</span> — {res.success ? 'Отклик отправлен' : `Ошибка: ${res.response?.error || 'Неизвестная ошибка'}`}
                 </li>
               ))}
             </ul>

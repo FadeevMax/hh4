@@ -12,7 +12,7 @@ export interface Token {
 // Create token storage
 const tokenStorage = new LocalStorage<Token>('tokens');
 
-export default {
+const tokenModel = {
   // Find token by user ID
   async findByUserId(userId: string): Promise<Token | null> {
     const tokens = await tokenStorage.find({ userId });
@@ -144,4 +144,6 @@ export default {
     
     return tokenStorage.delete(token.id);
   }
-}; 
+};
+
+export default tokenModel; 

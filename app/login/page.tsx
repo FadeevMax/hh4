@@ -4,21 +4,10 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuthContext } from '@/lib/context/AuthContext';
 
-// Simple hardcoded credentials for demo - in production, these should be in a secure database
-const VALID_CREDENTIALS = [
-  { username: 'admin', password: 'admin123' }
-];
-
 export default function Login() {
   const router = useRouter();
-  const { login, connectToHH, hhConnected } = useAuthContext();
-  const [formData, setFormData] = useState({
-    username: '',
-    password: '',
-  });
+  const { } = useAuthContext();
   const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   // On page load, check if the user is already logged in
   useEffect(() => {
@@ -27,60 +16,6 @@ export default function Login() {
       router.push('/dashboard');
     }
   }, [router]);
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
-  };
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsLoading(true);
-    setError(null);
-
-    // Validate credentials locally (in a real app, this would be a server request)
-    const isValid = VALID_CREDENTIALS.some(
-      cred => cred.username === formData.username && cred.password === formData.password
-    );
-    
-    if (isValid) {
-      // Generate a random state for CSRF protection
-      const state = Math.random().toString(36).substring(2, 15);
-      localStorage.setItem('oauth_state', state);
-      
-      // Redirect to HH.ru OAuth authorization endpoint
-      const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
-      
-      // Always use the exact same redirect URI format throughout the application
-      const redirectUri = 'http://localhost:3000/auth/callback';
-      
-      // Create the full authorization URL with proper encoding
-      const authUrl = 
-        `https://hh.ru/oauth/authorize?` +
-        `response_type=code&` +
-        `client_id=${encodeURIComponent(clientId)}&` +
-        `state=${encodeURIComponent(state)}&` +
-        `redirect_uri=${encodeURIComponent(redirectUri)}`;
-      
-      console.log('Redirecting to auth URL:', authUrl);
-      console.log('Encoded redirect URI:', encodeURIComponent(redirectUri));
-      
-      window.location.href = authUrl;
-    } else {
-      setError('Неверное имя пользователя или пароль');
-      setIsLoading(false);
-    }
-  };
-
-  const handleHHConnect = () => {
-    try {
-      connectToHH();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : 'Ошибка подключения к HeadHunter');
-    }
-  };
 
   const handleHHLogin = () => {
     setIsLoading(true);

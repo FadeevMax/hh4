@@ -12,7 +12,7 @@ interface AutoApplicatorProps {
   userId: string;
   filterActive: boolean;
   onStatusChange?: (status: 'idle' | 'loading' | 'success' | 'error', message?: string) => void;
-  onApplicationComplete?: (results: any) => void;
+  onApplicationComplete?: (results: unknown) => void;
 }
 
 export default function AutoApplicator({ 
@@ -134,7 +134,7 @@ export default function AutoApplicator({
     if (userId && localStorage.getItem('accessToken')) {
       fetchResumes();
     }
-  }, [userId, selectedResumeId, onStatusChange]);
+  }, [userId, selectedResumeId, onStatusChange, isLoadingResumes]);
 
   // Function to start the auto-application process
   const startAutoApplication = async () => {

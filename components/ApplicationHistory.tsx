@@ -111,7 +111,7 @@ export default function ApplicationHistory({ userId, onStatusChange }: Applicati
     } finally {
       setIsLoading(false);
     }
-  }, [userId]);
+  }, [userId, isLoading, onStatusChange]);
 
   // Using useEffect with a proper cleanup function
   useEffect(() => {
