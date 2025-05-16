@@ -34,11 +34,12 @@ export default function Login() {
     const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
     const redirectUri = isLocalhost 
       ? 'http://localhost:3000/auth/callback'
-      : 'https://hh-gules-one.vercel.app/auth/callback';
+      : 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
     
     // Debug logging - show what values we're actually using
     console.log('Environment variable:', process.env.NEXT_PUBLIC_HH_REDIRECT_URI);
     console.log('Is localhost:', isLocalhost);
+    console.log('Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
     console.log('Final redirectUri value:', redirectUri);
     
     // Create the full authorization URL with proper encoding

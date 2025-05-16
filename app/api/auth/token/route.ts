@@ -26,7 +26,7 @@ export async function POST(request: NextRequest) {
     // Explicitly set the full, exact redirect URI based on environment
     const redirectUri = isDevelopment
       ? 'http://localhost:3000/auth/callback'
-      : 'https://hh-gules-one.vercel.app/auth/callback';
+      : 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
     
     console.log('Host:', hostname);
     console.log('Is development:', isDevelopment);
