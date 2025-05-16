@@ -18,9 +18,18 @@ export async function POST(request: NextRequest) {
     // Set up parameters for token exchange
     const clientId = process.env.HH_API_KEY || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
     const clientSecret = process.env.HH_API_SECRET || 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
-    // Explicitly set the full, exact redirect URI
-    const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
     
+    // Determine if we're in development or production based on the request
+    const hostname = request.headers.get('host') || '';
+    const isDevelopment = hostname.includes('localhost');
+    
+    // Explicitly set the full, exact redirect URI based on environment
+    const redirectUri = isDevelopment
+      ? 'http://localhost:3000/auth/callback'
+      : 'https://hh-gules-one.vercel.app/auth/callback';
+    
+    console.log('Host:', hostname);
+    console.log('Is development:', isDevelopment);
     console.log('Using redirect URI:', redirectUri);
     console.log('Authorization code:', code);
 

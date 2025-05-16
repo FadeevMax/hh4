@@ -30,11 +30,19 @@ export default function Login() {
     const state = Math.random().toString(36).substring(2, 15);
     localStorage.setItem('oauth_state', state);
     
-    // Redirect to HH.ru OAuth authorization endpoint
-    const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
+    // Get redirect URI - hardcode for production but use env for local dev
+    const isLocalhost = typeof window !== 'undefined' && window.location.hostname === 'localhost';
+    const redirectUri = isLocalhost 
+      ? 'http://localhost:3000/auth/callback'
+      : 'https://hh-gules-one.vercel.app/auth/callback';
     
-    // Always use the exact same redirect URI format throughout the application
-    const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
+    // Debug logging - show what values we're actually using
+    console.log('Environment variable:', process.env.NEXT_PUBLIC_HH_REDIRECT_URI);
+    console.log('Is localhost:', isLocalhost);
+    console.log('Final redirectUri value:', redirectUri);
+    
+    // Create the full authorization URL with proper encoding
+    const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
     
     // Create the full authorization URL with proper encoding
     const authUrl = 
