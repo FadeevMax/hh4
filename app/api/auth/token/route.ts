@@ -4,15 +4,15 @@ import TokenModel from '@/lib/models/token';
 
 export async function POST(request: NextRequest) {
   try {
+    // Получаем код из запроса
     const { code } = await request.json();
-     // 1. Жестко прописываем redirect_URI для продакшена
-    const redirectUri = 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
-    
-    // 2. Используем явные параметры клиента
+
+    // Жестко прописываем параметры для продакшена
     const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
     const clientSecret = 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
+    const redirectUri = 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
 
-    // 3. Используем URLSearchParams для правильного кодирования
+    // Формируем параметры запроса
     const params = new URLSearchParams();
     params.append('grant_type', 'authorization_code');
     params.append('client_id', clientId);
@@ -20,6 +20,7 @@ export async function POST(request: NextRequest) {
     params.append('redirect_uri', redirectUri);
     params.append('code', code);
 
+    // Отправляем запрос к HH.ru
     const tokenResponse = await fetch('https://hh.ru/oauth/token', {
       method: 'POST',
       headers: {
@@ -28,64 +29,13 @@ export async function POST(request: NextRequest) {
       body: params.toString(),
     });
 
-    console.log('Token exchange request started');
-    const { code } = await request.json();
-
-    if (!code) {
-      console.log('No authorization code provided');
-      return NextResponse.json(
-        { error: 'Authorization code is required' },
-        { status: 400 }
-      );
-    }
-
-    // Set up parameters for token exchange
-    const clientId = process.env.HH_API_KEY || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
-    const clientSecret = process.env.HH_API_SECRET || 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
-    
-    // Determine if we're in development or production based on the request
-    const hostname = request.headers.get('host') || '';
-    const isDevelopment = hostname.includes('localhost');
-    
-    // Explicitly set the full, exact redirect URI based on environment
-    const redirectUri = isDevelopment
-      ? 'http://localhost:3000/auth/callback'
-      : 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
-    
-    console.log('Host:', hostname);
-    console.log('Is development:', isDevelopment);
-    console.log('Using redirect URI:', redirectUri);
-    console.log('Authorization code:', code);
-
-    // Create URL-encoded form body for token request - using explicit string to ensure proper encoding
-    const formBody = 
-      `grant_type=authorization_code&` +
-      `client_id=${encodeURIComponent(clientId)}&` +
-      `client_secret=${encodeURIComponent(clientSecret)}&` +
-      `redirect_uri=${encodeURIComponent(redirectUri)}&` +
-      `code=${encodeURIComponent(code)}`;
-    
-    console.log('Token request string:', formBody);
-
-    // Make the token exchange request to HH.ru
-    const tokenResponse = await fetch('https://hh.ru/oauth/token', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-      },
-      body: formBody,
-    });
-
-    // Log the raw response for debugging
-    console.log('Token response status:', tokenResponse.status);
+    // Обработка ответа...
     const responseText = await tokenResponse.text();
-    console.log('Token response body:', responseText);
-    
     let tokenData;
     try {
       tokenData = JSON.parse(responseText);
     } catch (e) {
-      console.error('Failed to parse token response as JSON:', e);
+      console.error('Failed to parse response:', e);
       return NextResponse.json(
         { error: 'Invalid response from HH.ru' },
         { status: 500 }
@@ -93,22 +43,23 @@ export async function POST(request: NextRequest) {
     }
 
     if (!tokenResponse.ok) {
-      console.error('Error exchanging code for token:', tokenData);
+      console.error('HH.ru error:', tokenData);
       return NextResponse.json(
-        { error: tokenData.error || 'Failed to exchange code for token', description: tokenData.error_description },
+        { 
+          error: tokenData.error || 'Token exchange failed',
+          description: tokenData.error_description 
+        },
         { status: tokenResponse.status }
       );
     }
 
-    // Get user info from HH.ru API
+    // Получаем данные пользователя
     const userResponse = await fetch('https://api.hh.ru/me', {
-      headers: {
-        'Authorization': `Bearer ${tokenData.access_token}`
-      }
+      headers: { 'Authorization': `Bearer ${tokenData.access_token}` }
     });
 
     if (!userResponse.ok) {
-      console.error('Error fetching user data');
+      console.error('User fetch error:', await userResponse.text());
       return NextResponse.json(
         { error: 'Failed to fetch user data' },
         { status: userResponse.status }
@@ -117,9 +68,8 @@ export async function POST(request: NextRequest) {
 
     const userData = await userResponse.json();
 
-    // Find or create user
+    // Обновляем/создаем пользователя
     let user = await UserModel.findByHhId(userData.id);
-
     if (!user) {
       user = await UserModel.createUser({
         username: userData.email || `hh_${userData.id}`,
@@ -129,18 +79,15 @@ export async function POST(request: NextRequest) {
         email: userData.email,
       });
     } else {
-      // Update user data
       await UserModel.updateUser(user.id, {
         firstName: userData.first_name,
         lastName: userData.last_name,
         email: userData.email,
       });
-      
-      // Update last login
       await UserModel.updateLastLogin(user.id);
     }
 
-    // Save tokens
+    // Сохраняем токены
     await TokenModel.saveToken(
       user.id, 
       tokenData.access_token, 
@@ -148,13 +95,11 @@ export async function POST(request: NextRequest) {
       tokenData.expires_in
     );
 
-    // Calculate the exact expiration timestamp for the client
-    const expirationTimestamp = Date.now() + (tokenData.expires_in * 1000);
-
-    // Return the tokens and user data to the client
+    // Формируем ответ
     return NextResponse.json({
-      ...tokenData,
-      expirationTimestamp,
+      access_token: tokenData.access_token,
+      refresh_token: tokenData.refresh_token,
+      expirationTimestamp: Date.now() + (tokenData.expires_in * 1000),
       user: {
         id: userData.id,
         email: userData.email,
@@ -162,11 +107,12 @@ export async function POST(request: NextRequest) {
         lastName: userData.last_name
       }
     });
+
   } catch (error) {
-    console.error('Token exchange error:', error);
+    console.error('Global error:', error);
     return NextResponse.json(
-      { error: 'Internal server error during token exchange' },
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
-} 
+}
