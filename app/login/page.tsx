@@ -28,6 +28,8 @@ export default function Login() {
     
     // Generate a random state for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
+    
+    // Store state in localStorage
     localStorage.setItem('oauth_state', state);
     
     // Get redirect URI - hardcode for production but use env for local dev
@@ -36,16 +38,14 @@ export default function Login() {
       ? 'http://localhost:3000/auth/callback'
       : 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
     
-    // Debug logging - show what values we're actually using
-    console.log('Environment variable:', process.env.NEXT_PUBLIC_HH_REDIRECT_URI);
+    // Debug logging
+    console.log('Generated state:', state);
     console.log('Is localhost:', isLocalhost);
-    console.log('Hostname:', typeof window !== 'undefined' ? window.location.hostname : 'unknown');
     console.log('Final redirectUri value:', redirectUri);
     
     // Create the full authorization URL with proper encoding
     const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
     
-    // Create the full authorization URL with proper encoding
     const authUrl = 
       `https://hh.ru/oauth/authorize?` +
       `response_type=code&` +
@@ -53,8 +53,8 @@ export default function Login() {
       `state=${encodeURIComponent(state)}&` +
       `redirect_uri=${encodeURIComponent(redirectUri)}`;
     
+    console.log('Auth URL state:', state);
     console.log('Redirecting to auth URL:', authUrl);
-    console.log('Encoded redirect URI:', encodeURIComponent(redirectUri));
     
     window.location.href = authUrl;
   };
@@ -94,4 +94,4 @@ export default function Login() {
       </div>
     </div>
   );
-} 
+}
