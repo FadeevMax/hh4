@@ -13,6 +13,26 @@ export default function AuthCallback() {
       try {
         // Парсинг параметров
         const urlParams = new URLSearchParams(window.location.search);
+           // 1. Проверяем наличие обязательных параметров
+        if (!params.has('code') || !params.has('state')) {
+          throw new Error('Отсутствуют обязательные параметры в URL');
+        }
+  
+        // 2. Сравнение state с повышенной точностью
+        const storedState = localStorage.getItem('oauth_state');
+        if (storedState !== params.get('state')) {
+          console.error('State mismatch:', {
+            stored: storedState,
+            received: params.get('state'),
+            url: window.location.href
+          });
+          throw new Error('Ошибка проверки безопасности');
+        }
+  
+        // 3. Проверка домена
+        if (!window.location.href.startsWith('https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/')) {
+          throw new Error('Некорректный домен для обработки запроса');
+        }
         const code = urlParams.get('code');
         const stateParam = urlParams.get('state');
         const errorParam = urlParams.get('error');
