@@ -1,119 +1,85 @@
 'use client';
+
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
 export default function AuthCallback() {
   const router = useRouter();
   const [status, setStatus] = useState('Проверяем авторизацию...');
-  const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState({
-    received: null,
-    stored: null
-  });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const exchangeCodeForToken = async () => {
+    const handleAuth = async () => {
       try {
-        // Clear any previously stored tokens
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('tokenExpiration');
-        
-        // Get query parameters
+        // Парсинг параметров
         const urlParams = new URLSearchParams(window.location.search);
         const code = urlParams.get('code');
         const stateParam = urlParams.get('state');
-        
-        // Get stored state
+        const errorParam = urlParams.get('error');
+
+        console.log('Callback params:', { code, stateParam, errorParam });
+
+        // Проверка ошибок
+        if (errorParam) throw new Error(`Ошибка авторизации: ${errorParam}`);
+        if (!code || !stateParam) throw new Error('Неполные параметры авторизации');
+
+        // Проверка state
         const storedState = localStorage.getItem('oauth_state');
-        
-        // Debug information
-        setDebugInfo({
-          received: stateParam,
-          stored: storedState
-        });
-        
-        console.log('Received state:', stateParam);
-        console.log('Stored state:', storedState);
-        
-        if (!code) {
-          throw new Error('Отсутствует код авторизации');
+        console.log('State check:', { stored: storedState, received: stateParam });
+
+        if (storedState !== stateParam) {
+          throw new Error('Несоответствие параметра безопасности');
         }
-        
-        // Check the state parameter
-        if (!stateParam || stateParam !== storedState) {
-          console.error('State mismatch:', { 
-            received: stateParam, 
-            stored: storedState,
-            url: window.location.href
-          });
-          throw new Error('Ошибка проверки состояния (CSRF)');
-        }
-        
-        // Clear state for security
-        localStorage.removeItem('oauth_state');
-        
-        setStatus('Получение токена...');
-        
-        // Send code to your API for token exchange
+
+        // Обмен кода на токен
+        setStatus('Получаем токен доступа...');
         const response = await fetch('/api/auth/token', {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
           },
-          body: JSON.stringify({ code })
+          body: JSON.stringify({
+            code,
+            client_id: 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T',
+            client_secret: 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ',
+          }),
         });
+
+        if (!response.ok) throw new Error('Ошибка сервера');
         
-        const data = await response.json();
+        const { access_token, refresh_token, expires_in } = await response.json();
         
-        if (!response.ok) {
-          throw new Error(data.error || 'Ошибка при получении токена');
-        }
+        // Сохранение токенов
+        localStorage.setItem('accessToken', access_token);
+        localStorage.setItem('refreshToken', refresh_token);
+        localStorage.setItem('tokenExpiration', String(Date.now() + expires_in * 1000));
         
-        localStorage.setItem('accessToken', data.access_token);
-        localStorage.setItem('refreshToken', data.refresh_token);
-        localStorage.setItem('tokenExpiration', data.expirationTimestamp.toString());
-        localStorage.setItem('user', JSON.stringify(data.user));
-        
-        setStatus('Авторизация успешна! Перенаправление...');
+        // Перенаправление
         router.push('/dashboard');
-      } catch (err) {
-        console.error('Auth callback error:', err);
-        setStatus('Ошибка авторизации');
-        setError(err instanceof Error ? err.message : 'Неизвестная ошибка авторизации');
         
-        localStorage.removeItem('accessToken');
-        localStorage.removeItem('refreshToken');
-        localStorage.removeItem('tokenExpiration');
+      } catch (err) {
+        console.error('Auth error:', err);
+        setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
+        localStorage.removeItem('oauth_state');
       }
     };
-    
-    exchangeCodeForToken();
+
+    handleAuth();
   }, [router]);
 
   return (
-    <div className="min-h-screen flex flex-col items-center justify-center">
-      <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-lg text-center">
-        <h2 className="text-2xl font-bold mb-4">{status}</h2>
-        
+    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
+      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
+        <h1 className="text-xl font-semibold mb-4 text-center">{status}</h1>
         {error && (
-          <div className="mt-4 p-4 bg-red-100 text-red-700 rounded-lg">
-            <p>{error}</p>
+          <div className="mt-4 p-4 bg-red-100 rounded-lg">
+            <p className="text-red-600">{error}</p>
             <button
               onClick={() => router.push('/login')}
-              className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+              className="mt-4 w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700"
             >
-              Вернуться на страницу входа
+              Вернуться к авторизации
             </button>
-          </div>
-        )}
-        
-        {/* Debugging section - remove in production */}
-        {debugInfo.received !== null && (
-          <div className="mt-6 p-4 bg-gray-100 rounded-lg text-left text-sm">
-            <h3 className="font-bold mb-2">Debug Info:</h3>
-            <p>Received state: <code>{debugInfo.received || 'null'}</code></p>
-            <p>Stored state: <code>{debugInfo.stored || 'null'}</code></p>
           </div>
         )}
       </div>
