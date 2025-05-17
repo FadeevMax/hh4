@@ -15,30 +15,33 @@ export default function Login() {
   const handleHHLogin = () => {
     setIsLoading(true);
     
-    // Генерация state с добавлением временной метки
+    // Генерация сложного state
     const state = [
       Math.random().toString(36).substring(2, 15),
       Date.now().toString(36),
       Math.random().toString(36).substring(2, 15)
     ].join('_');
     
-    localStorage.setItem('oauth_state', state);
+    // Синхронное сохранение state
+    localStorage.setItem('hh_oauth_state', state);
+    console.log('Stored state:', state);
+
+    // Формирование URL
+    const redirectUri = encodeURIComponent(
+      'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback'
+    );
     
-    // Формирование redirect_uri
-    const isProduction = process.env.NODE_ENV === 'production';
-    const redirectUri = isProduction 
-      ? 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback'
-      : 'http://localhost:3000/auth/callback';
+    const authUrl = `https://hh.ru/oauth/authorize?${
+      new URLSearchParams({
+        response_type: 'code',
+        client_id: 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T',
+        state: state,
+        redirect_uri: redirectUri
+      })
+    }`;
 
-    // Формирование URL с использованием URL API
-    const authUrl = new URL('https://hh.ru/oauth/authorize');
-    authUrl.searchParams.append('response_type', 'code');
-    authUrl.searchParams.append('client_id', 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T');
-    authUrl.searchParams.append('redirect_uri', redirectUri);
-    authUrl.searchParams.append('state', state);
-
-    console.log('Auth URL:', authUrl.toString());
-    window.location.assign(authUrl.toString());
+    console.log('Redirecting to:', authUrl);
+    window.location.href = authUrl;
   };
 
   return (
