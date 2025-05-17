@@ -4,6 +4,30 @@ import TokenModel from '@/lib/models/token';
 
 export async function POST(request: NextRequest) {
   try {
+    const { code } = await request.json();
+     // 1. Жестко прописываем redirect_URI для продакшена
+    const redirectUri = 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
+    
+    // 2. Используем явные параметры клиента
+    const clientId = 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
+    const clientSecret = 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
+
+    // 3. Используем URLSearchParams для правильного кодирования
+    const params = new URLSearchParams();
+    params.append('grant_type', 'authorization_code');
+    params.append('client_id', clientId);
+    params.append('client_secret', clientSecret);
+    params.append('redirect_uri', redirectUri);
+    params.append('code', code);
+
+    const tokenResponse = await fetch('https://hh.ru/oauth/token', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded',
+      },
+      body: params.toString(),
+    });
+
     console.log('Token exchange request started');
     const { code } = await request.json();
 
