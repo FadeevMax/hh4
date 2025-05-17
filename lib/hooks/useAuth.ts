@@ -89,26 +89,27 @@ export function useAuth() {
     }
   }, []);
 
-  // Connect to HH.ru after site login
-  const connectToHH = useCallback(() => {
-    if (!authState.isLoggedIn || !authState.user) {
-      throw new Error('You must be logged in to connect to HH.ru');
-    }
+ const connectToHH = useCallback(() => {
+  const state = [
+    Math.random().toString(36).substring(2, 15),
+    Date.now().toString(36),
+    Math.random().toString(36).substring(2, 15)
+  ].join('_');
+  
+  localStorage.setItem('oauth_state', state);
+  
+  // Жестко прописанный redirect_uri для продакшена
+  const redirectUri = 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
+  
+  const authUrl = new URL('https://hh.ru/oauth/authorize');
+  authUrl.searchParams.append('response_type', 'code');
+  authUrl.searchParams.append('client_id', clientId);
+  authUrl.searchParams.append('state', state);
+  authUrl.searchParams.append('redirect_uri', redirectUri);
 
-    // Generate a random state for CSRF protection
-    const state = Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('oauth_state', state);
-    
-    // Store the current user ID for callback
-    localStorage.setItem('connecting_user_id', authState.user.id);
-    
-    // Redirect to HH.ru OAuth authorization endpoint
-    const clientId = process.env.NEXT_PUBLIC_HH_CLIENT_ID || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
-    const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
-    
-    window.location.href = `https://hh.ru/oauth/authorize?response_type=code&client_id=${clientId}&state=${state}&redirect_uri=${encodeURIComponent(redirectUri)}`;
-  }, [authState.isLoggedIn, authState.user]);
-
+  window.location.assign(authUrl.toString());
+}, []);
+  
   // Process HH.ru OAuth token response
   const processHHToken = useCallback(async (code: string) => {
     try {
