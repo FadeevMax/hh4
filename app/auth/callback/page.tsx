@@ -9,83 +9,43 @@ export default function AuthCallback() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const handleAuth = async () => {
-      try {
-        // Парсинг параметров
-        const urlParams = new URLSearchParams(window.location.search);
-           // 1. Проверяем наличие обязательных параметров
-        if (!params.has('code') || !params.has('state')) {
-          throw new Error('Отсутствуют обязательные параметры в URL');
-        }
-  
-        // 2. Сравнение state с повышенной точностью
-        const storedState = localStorage.getItem('oauth_state');
-        if (storedState !== params.get('state')) {
-          console.error('State mismatch:', {
-            stored: storedState,
-            received: params.get('state'),
-            url: window.location.href
-          });
-          throw new Error('Ошибка проверки безопасности');
-        }
-  
-        // 3. Проверка домена
-        if (!window.location.href.startsWith('https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/')) {
-          throw new Error('Некорректный домен для обработки запроса');
-        }
-        const code = urlParams.get('code');
-        const stateParam = urlParams.get('state');
-        const errorParam = urlParams.get('error');
-
-        console.log('Callback params:', { code, stateParam, errorParam });
-
-        // Проверка ошибок
-        if (errorParam) throw new Error(`Ошибка авторизации: ${errorParam}`);
-        if (!code || !stateParam) throw new Error('Неполные параметры авторизации');
-
-        // Проверка state
-        const storedState = localStorage.getItem('oauth_state');
-        console.log('State check:', { stored: storedState, received: stateParam });
-
-        if (storedState !== stateParam) {
-          throw new Error('Несоответствие параметра безопасности');
-        }
-
-        // Обмен кода на токен
-        setStatus('Получаем токен доступа...');
-        const response = await fetch('/api/auth/token', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            code,
-            client_id: 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T',
-            client_secret: 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ',
-          }),
-        });
-
-        if (!response.ok) throw new Error('Ошибка сервера');
-        
-        const { access_token, refresh_token, expires_in } = await response.json();
-        
-        // Сохранение токенов
-        localStorage.setItem('accessToken', access_token);
-        localStorage.setItem('refreshToken', refresh_token);
-        localStorage.setItem('tokenExpiration', String(Date.now() + expires_in * 1000));
-        
-        // Перенаправление
-        router.push('/dashboard');
-        
-      } catch (err) {
-        console.error('Auth error:', err);
-        setError(err instanceof Error ? err.message : 'Неизвестная ошибка');
-        localStorage.removeItem('oauth_state');
+  const handleAuth = async () => {
+    try {
+      const params = new URLSearchParams(window.location.search);
+      
+      // Проверка обязательных параметров
+      if (!params.has('code') || !params.has('state')) {
+        throw new Error('Missing required parameters');
       }
-    };
 
-    handleAuth();
-  }, [router]);
+      const code = params.get('code');
+      const stateParam = params.get('state');
+      const errorParam = params.get('error');
+
+      // Проверка ошибок от HH
+      if (errorParam) throw new Error(`HH Error: ${errorParam}`);
+
+      // Проверка состояния
+      const storedState = localStorage.getItem('oauth_state');
+      console.log('State check:', { stored: storedState, received: stateParam });
+
+      if (!storedState || storedState !== stateParam) {
+        throw new Error('Security state mismatch');
+      }
+
+      // Очистка состояния
+      localStorage.removeItem('oauth_state');
+
+      // Дальнейшая обработка...
+      
+    } catch (err) {
+      console.error('Auth error:', err);
+      setError(err instanceof Error ? err.message : 'Unknown error');
+    }
+  };
+
+  handleAuth();
+}, [router]);
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
