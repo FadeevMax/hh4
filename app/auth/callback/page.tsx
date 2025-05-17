@@ -42,14 +42,12 @@ export default function AuthCallback() {
         
         // Check the state parameter
         if (!stateParam || stateParam !== storedState) {
-          // For debug purposes, don't block on state mismatch in this version
-          console.warn('State mismatch, but proceeding for testing:', { 
+          console.error('State mismatch:', { 
             received: stateParam, 
-            stored: storedState 
+            stored: storedState,
+            url: window.location.href
           });
-          // We'll continue with the flow but log the issue
-          // In production, you should uncomment the line below
-          // throw new Error('Ошибка проверки состояния (возможная атака CSRF)');
+          throw new Error('Ошибка проверки состояния (CSRF)');
         }
         
         // Clear state for security
