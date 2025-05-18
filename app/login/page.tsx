@@ -24,7 +24,7 @@ export default function Login() {
     
     // Синхронное сохранение state
     localStorage.setItem('hh_oauth_state', state);
-    console.log('Stored state:', state);
+    console.log('[OAuth] Set state:', state);
 
     // Формирование URL
     const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';

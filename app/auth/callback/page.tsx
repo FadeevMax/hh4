@@ -23,7 +23,7 @@ export default function AuthCallback() {
 
         // Получаем state из localStorage
         const storedState = localStorage.getItem('hh_oauth_state');
-        console.log('State check:', { stored: storedState, received: stateParam });
+        console.log('[OAuth] Get state:', storedState, 'Received:', stateParam);
 
         if (!storedState || storedState !== stateParam) {
           throw new Error('Security check failed: State mismatch');
