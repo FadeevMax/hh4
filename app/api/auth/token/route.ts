@@ -18,7 +18,7 @@ export async function POST(request: NextRequest) {
       grant_type: 'authorization_code',
       client_id: 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T',
       client_secret: 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ',
-      redirect_uri: 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback',
+      redirect_uri: process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback',
       code: code
     });
 

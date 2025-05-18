@@ -27,9 +27,7 @@ export default function Login() {
     console.log('Stored state:', state);
 
     // Формирование URL
-    const redirectUri = encodeURIComponent(
-      'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback'
-    );
+    const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
     
     const authUrl = `https://hh.ru/oauth/authorize?${
       new URLSearchParams({

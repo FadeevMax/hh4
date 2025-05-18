@@ -99,7 +99,7 @@ export function useAuth() {
   localStorage.setItem('oauth_state', state);
   
   // Жестко прописанный redirect_uri для продакшена
-  const redirectUri = 'https://hh-7c9gp334w-maxs-projects-7786cae4.vercel.app/auth/callback';
+  const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
   
   const authUrl = new URL('https://hh.ru/oauth/authorize');
   authUrl.searchParams.append('response_type', 'code');
