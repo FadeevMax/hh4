@@ -104,7 +104,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const connectToHH = () => {
     // Generate a random state for CSRF protection
     const state = Math.random().toString(36).substring(2, 15);
-    localStorage.setItem('oauth_state', state);
+    localStorage.setItem('hh_oauth_state', state);
     
     // Redirect to HH.ru OAuth authorization endpoint
     const clientId = process.env.NEXT_PUBLIC_HH_API_KEY || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';

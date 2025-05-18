@@ -39,8 +39,8 @@ export default function Home() {
   const handleOAuthCallback = useCallback(async (code: string, state: string | null) => {
     setStatus('loading');
     try {
-      const storedState = localStorage.getItem('oauth_state');
-      localStorage.removeItem('oauth_state');
+      const storedState = localStorage.getItem('hh_oauth_state');
+      localStorage.removeItem('hh_oauth_state');
       if (!state || state !== storedState) {
         throw new Error('Ошибка проверки безопасности. Попробуйте войти снова.');
       }

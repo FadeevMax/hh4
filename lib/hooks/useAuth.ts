@@ -96,7 +96,7 @@ export function useAuth() {
     Math.random().toString(36).substring(2, 15)
   ].join('_');
   
-  localStorage.setItem('oauth_state', state);
+  localStorage.setItem('hh_oauth_state', state);
   
   // Жестко прописанный redirect_uri для продакшена
   const redirectUri = process.env.NEXT_PUBLIC_HH_REDIRECT_URI || 'http://localhost:3000/auth/callback';
