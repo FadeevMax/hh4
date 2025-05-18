@@ -1,43 +1,57 @@
-import LocalStorage from '../db/local-storage';
+import mongoose from 'mongoose';
+import dbConnect from '../db/connect';
 
 // Define user interface
 export interface User {
   id: string;
   username: string;
-  hhId?: string; // HeadHunter ID (optional)
-  firstName?: string;
-  lastName?: string;
-  email?: string;
+  hhId: string;
+  firstName: string;
+  lastName: string;
+  email: string;
   createdAt: number;
   lastLoginAt: number;
 }
 
-// Create user storage
-const userStorage = new LocalStorage<User>('users');
+// Define user schema
+const userSchema = new mongoose.Schema<User>({
+  username: { type: String, required: true, unique: true },
+  hhId: { type: String, required: true, unique: true },
+  firstName: { type: String, required: true },
+  lastName: { type: String, required: true },
+  email: { type: String, required: true },
+  createdAt: { type: Number, required: true },
+  lastLoginAt: { type: Number, required: true }
+});
+
+// Create or get the model
+const UserModel = mongoose.models.User || mongoose.model<User>('User', userSchema);
 
 const userModel = {
   // Find user by ID
   async findById(id: string): Promise<User | null> {
-    return userStorage.findById(id);
+    await dbConnect();
+    return UserModel.findById(id);
   },
   
   // Find user by username
   async findByUsername(username: string): Promise<User | null> {
-    const users = await userStorage.find({ username });
-    return users.length > 0 ? users[0] : null;
+    await dbConnect();
+    return UserModel.findOne({ username });
   },
   
   // Find user by HH.ru ID
   async findByHhId(hhId: string): Promise<User | null> {
-    const users = await userStorage.find({ hhId });
-    return users.length > 0 ? users[0] : null;
+    await dbConnect();
+    return UserModel.findOne({ hhId });
   },
   
   // Create a new user
   async createUser(userData: Omit<User, 'id' | 'createdAt' | 'lastLoginAt'>): Promise<User> {
+    await dbConnect();
     const now = Date.now();
     
-    return userStorage.create({
+    return UserModel.create({
       ...userData,
       createdAt: now,
       lastLoginAt: now
@@ -46,17 +60,24 @@ const userModel = {
   
   // Update user
   async updateUser(id: string, userData: Partial<User>): Promise<User | null> {
-    return userStorage.update(id, userData);
+    await dbConnect();
+    return UserModel.findByIdAndUpdate(id, userData, { new: true });
   },
   
   // Update user's last login time
   async updateLastLogin(id: string): Promise<User | null> {
-    return userStorage.update(id, { lastLoginAt: Date.now() });
+    await dbConnect();
+    return UserModel.findByIdAndUpdate(
+      id,
+      { lastLoginAt: Date.now() },
+      { new: true }
+    );
   },
   
   // Get all users
   async getAllUsers(): Promise<User[]> {
-    return userStorage.findAll();
+    await dbConnect();
+    return UserModel.find();
   }
 };
 

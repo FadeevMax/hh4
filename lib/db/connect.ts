@@ -12,11 +12,17 @@ declare global {
   var mongoose: MongooseCache;
 }
 
-const MONGODB_URI = process.env.MONGODB_URI || 'mongodb://localhost:27017/hh-auto-apply';
+const MONGODB_URI = process.env.MONGODB_URI;
+
+if (!MONGODB_URI) {
+  throw new Error('Please define the MONGODB_URI environment variable inside .env.local');
+}
 
 let cached: MongooseCache = global.mongoose || { conn: null, promise: null };
 
-cached = global.mongoose = { conn: null, promise: null };
+if (!global.mongoose) {
+  global.mongoose = cached;
+}
 
 async function dbConnect(): Promise<typeof mongoose> {
   if (cached.conn) {
@@ -29,7 +35,7 @@ async function dbConnect(): Promise<typeof mongoose> {
     };
 
     console.log('Connecting to MongoDB...');
-    cached.promise = mongoose.connect(MONGODB_URI, opts).then((mongoose: typeof import('mongoose')) => {
+    cached.promise = mongoose.connect(MONGODB_URI as string, opts).then((mongoose: typeof import('mongoose')) => {
       console.log('MongoDB connected successfully');
       return mongoose;
     });

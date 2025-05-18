@@ -1,4 +1,5 @@
-import LocalStorage from '../db/local-storage';
+import mongoose from 'mongoose';
+import dbConnect from '../db/connect';
 
 // Define application interface
 export interface Application {
@@ -14,34 +15,58 @@ export interface Application {
   url: string;
 }
 
-// Create application storage
-const applicationStorage = new LocalStorage<Application>('applications');
+// Define application schema
+const applicationSchema = new mongoose.Schema<Application>({
+  userId: { type: String, required: true },
+  vacancyId: { type: String, required: true },
+  vacancyTitle: { type: String, required: true },
+  companyName: { type: String, required: true },
+  salaryDisplay: { type: String, required: true },
+  location: { type: String, required: true },
+  appliedAt: { type: Number, required: true },
+  status: { 
+    type: String, 
+    required: true,
+    enum: ['applied', 'viewed', 'invited', 'rejected', 'cancelled']
+  },
+  url: { type: String, required: true }
+});
+
+// Create compound index for userId and vacancyId
+applicationSchema.index({ userId: 1, vacancyId: 1 }, { unique: true });
+
+// Create or get the model
+const ApplicationModel = mongoose.models.Application || mongoose.model<Application>('Application', applicationSchema);
 
 const applicationModel = {
   // Save a new application
   async saveApplication(applicationData: Omit<Application, 'id'>): Promise<Application> {
-    return applicationStorage.create(applicationData);
+    await dbConnect();
+    return ApplicationModel.create(applicationData);
   },
   
   // Find applications by user ID
   async findByUserId(userId: string): Promise<Application[]> {
-    return applicationStorage.find({ userId });
+    await dbConnect();
+    return ApplicationModel.find({ userId });
   },
   
   // Find application by vacancy ID and user ID
   async findByVacancyAndUser(userId: string, vacancyId: string): Promise<Application | null> {
-    const applications = await applicationStorage.find({ userId, vacancyId });
-    return applications.length > 0 ? applications[0] : null;
+    await dbConnect();
+    return ApplicationModel.findOne({ userId, vacancyId });
   },
   
   // Update application status
   async updateStatus(id: string, status: Application['status']): Promise<Application | null> {
-    return applicationStorage.update(id, { status });
+    await dbConnect();
+    return ApplicationModel.findByIdAndUpdate(id, { status }, { new: true });
   },
   
   // Get all applications
   async getAllApplications(): Promise<Application[]> {
-    return applicationStorage.findAll();
+    await dbConnect();
+    return ApplicationModel.find();
   },
   
   // Get application statistics for a user
@@ -53,6 +78,7 @@ const applicationModel = {
     rejected: number;
     cancelled: number;
   }> {
+    await dbConnect();
     const applications = await this.findByUserId(userId);
     
     return {

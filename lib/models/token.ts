@@ -1,4 +1,5 @@
-import LocalStorage from '../db/local-storage';
+import mongoose from 'mongoose';
+import dbConnect from '../db/connect';
 
 // Define token interface
 export interface Token {
@@ -9,14 +10,22 @@ export interface Token {
   userId: string;
 }
 
-// Create token storage
-const tokenStorage = new LocalStorage<Token>('tokens');
+// Define token schema
+const tokenSchema = new mongoose.Schema<Token>({
+  accessToken: { type: String, required: true },
+  refreshToken: { type: String, required: true },
+  expires: { type: Number, required: true },
+  userId: { type: String, required: true, unique: true }
+});
+
+// Create or get the model
+const TokenModel = mongoose.models.Token || mongoose.model<Token>('Token', tokenSchema);
 
 const tokenModel = {
   // Find token by user ID
   async findByUserId(userId: string): Promise<Token | null> {
-    const tokens = await tokenStorage.find({ userId });
-    return tokens.length > 0 ? tokens[0] : null;
+    await dbConnect();
+    return TokenModel.findOne({ userId });
   },
   
   // Get the latest valid token for a user
@@ -60,8 +69,13 @@ const tokenModel = {
       console.log('Refreshing token for user:', token.userId);
       
       // Set up parameters for token refresh
-      const clientId = process.env.HH_API_KEY || 'MI6VLQ3KDNT1BOOLBC7VAB9F4IB1V8A73KAQ21IKI59Q618SQDD5IPA2R9GMPF9T';
-      const clientSecret = process.env.HH_API_SECRET || 'JFVAEI4Q1HRILG8Q6IDL7SAJK1PCS6FHL9I6B9K0CI4SVDIRKGVE1TMI9N658TDQ';
+      const clientId = process.env.NEXT_PUBLIC_HH_CLIENT_ID;
+      const clientSecret = process.env.HH_CLIENT_SECRET;
+      
+      if (!clientId || !clientSecret) {
+        console.error('Missing client credentials');
+        return false;
+      }
       
       // Create URL-encoded form body for refresh request
       const params = new URLSearchParams({
@@ -112,8 +126,7 @@ const tokenModel = {
   
   // Create or update token
   async saveToken(userId: string, accessToken: string, refreshToken: string, expiresIn: number): Promise<Token> {
-    const existingToken = await this.findByUserId(userId);
-    
+    await dbConnect();
     const tokenData = {
       accessToken,
       refreshToken,
@@ -121,11 +134,11 @@ const tokenModel = {
       userId
     };
     
-    if (existingToken) {
-      return (await tokenStorage.update(existingToken.id, tokenData))!;
-    } else {
-      return await tokenStorage.create(tokenData);
-    }
+    return TokenModel.findOneAndUpdate(
+      { userId },
+      tokenData,
+      { upsert: true, new: true }
+    );
   },
   
   // Check if token is valid
@@ -136,13 +149,9 @@ const tokenModel = {
   
   // Delete token
   async deleteToken(userId: string): Promise<boolean> {
-    const token = await this.findByUserId(userId);
-    
-    if (!token) {
-      return false;
-    }
-    
-    return tokenStorage.delete(token.id);
+    await dbConnect();
+    const result = await TokenModel.deleteOne({ userId });
+    return result.deletedCount > 0;
   }
 };
 
