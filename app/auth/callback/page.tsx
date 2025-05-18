@@ -18,14 +18,21 @@ export default function AuthCallback() {
       try {
         console.log('Callback params:', { code, stateParam, errorParam });
         
-        if (errorParam) throw new Error(`HH Error: ${errorParam}`);
-        if (!code || !stateParam) throw new Error('Missing parameters');
+        if (errorParam) {
+          console.error('HH.ru returned error:', errorParam);
+          throw new Error(`HH Error: ${errorParam}`);
+        }
+        if (!code || !stateParam) {
+          console.error('Missing parameters:', { code, stateParam });
+          throw new Error('Missing parameters');
+        }
 
         // Получаем state из localStorage
         const storedState = localStorage.getItem('hh_oauth_state');
         console.log('[OAuth] Get state:', storedState, 'Received:', stateParam);
 
         if (!storedState || storedState !== stateParam) {
+          console.error('State mismatch:', { stored: storedState, received: stateParam });
           throw new Error('Security check failed: State mismatch');
         }
 
@@ -34,45 +41,73 @@ export default function AuthCallback() {
 
         // Отправляем код на сервер
         setStatus('Exchanging code...');
+        console.log('Sending code to server for exchange');
         const response = await fetch('/api/auth/token', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ code })
         });
 
-        if (!response.ok) throw new Error('Token exchange failed');
+        const data = await response.json();
+        console.log('Token exchange response:', { status: response.status, ok: response.ok });
+
+        if (!response.ok) {
+          console.error('Token exchange failed:', data);
+          throw new Error(data.error || 'Token exchange failed');
+        }
         
         // Сохраняем токены и редирект
-        const { access_token, refresh_token } = await response.json();
-        localStorage.setItem('accessToken', access_token);
-        localStorage.setItem('refreshToken', refresh_token);
+        console.log('Saving tokens to localStorage');
+        localStorage.setItem('accessToken', data.access_token);
+        localStorage.setItem('refreshToken', data.refresh_token);
+        localStorage.setItem('user', JSON.stringify(data.user));
         
+        console.log('Redirecting to dashboard');
         router.push('/dashboard');
         
       } catch (err) {
-        console.error('Auth error:', err);
-        setError(err instanceof Error ? err.message : 'Unknown error');
-        localStorage.removeItem('hh_oauth_state');
+        console.error('Auth callback error:', err);
+        setError(err instanceof Error ? err.message : 'Произошла ошибка при авторизации');
+        setStatus('error');
       }
     };
 
     handleAuth();
   }, [router]);
-  return (
-    <div className="min-h-screen flex flex-col items-center justify-center bg-gray-50">
-      <div className="w-full max-w-md p-6 bg-white rounded-lg shadow-md">
-        <h1 className="text-xl font-semibold mb-4 text-center">{status}</h1>
-        {error && (
-          <div className="mt-4 p-4 bg-red-100 rounded-lg">
-            <p className="text-red-600">{error}</p>
+
+  if (error) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-gray-50">
+        <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+          <div>
+            <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              Ошибка авторизации
+            </h2>
+            <p className="mt-2 text-center text-sm text-gray-600">
+              {error}
+            </p>
+          </div>
+          <div className="mt-8">
             <button
-              onClick={() => router.push('/login')}
-              className="mt-4 w-full py-2 px-4 bg-red-600 text-white rounded-md hover:bg-red-700"
+              onClick={() => router.push('/')}
+              className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
             >
               Вернуться к авторизации
             </button>
           </div>
-        )}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="max-w-md w-full space-y-8 p-8 bg-white rounded-lg shadow">
+        <div>
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+            {status}
+          </h2>
+        </div>
       </div>
     </div>
   );
