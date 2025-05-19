@@ -9,6 +9,7 @@ interface JobFilter {
   maxSalary: string;
   location: string;
   autoApply: boolean;
+  coverLetter?: string;
 }
 
 interface JobFilterConfigProps {
@@ -31,12 +32,15 @@ export default function JobFilterConfig({
     minSalary: '',
     maxSalary: '',
     location: '',
-    autoApply: false
+    autoApply: false,
+    coverLetter: ''
   });
   const [isSearching, setIsSearching] = useState(false);
   const [resumes, setResumes] = useState<HHVacancy[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   const [autoApplyResults, setAutoApplyResults] = useState<HHVacancy[]>([]);
+  const [showCoverLetter, setShowCoverLetter] = useState<boolean>(false);
+  const defaultCoverLetter = 'Здравствуйте, очень заинтересовала вакансия';
   
   // Load saved filter from localStorage on initial load
   useEffect(() => {
@@ -99,7 +103,8 @@ export default function JobFilterConfig({
       minSalary: '',
       maxSalary: '',
       location: '',
-      autoApply: false
+      autoApply: false,
+      coverLetter: ''
     });
     
     // Clear saved filter
@@ -439,6 +444,38 @@ export default function JobFilterConfig({
           <label htmlFor="autoApply" className="ml-2 block text-sm text-gray-700">
             Автоматически откликаться на подходящие вакансии
           </label>
+        </div>
+        
+        {/* Cover Letter Toggle */}
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowCoverLetter((prev) => !prev)}
+            className="mb-2 px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
+          >
+            {showCoverLetter ? 'Убрать сопроводительное письмо' : 'Добавить сопроводительное письмо'}
+          </button>
+          {showCoverLetter && (
+            <div>
+              <textarea
+                id="coverLetter"
+                name="coverLetter"
+                value={filter.coverLetter}
+                onChange={handleChange}
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                rows={4}
+                placeholder="Введите сопроводительное письмо (опционально)"
+              />
+              <button
+                type="button"
+                onClick={() => setFilter(prev => ({ ...prev, coverLetter: defaultCoverLetter }))}
+                className="mt-2 px-3 py-1 bg-green-100 rounded hover:bg-green-200 text-sm"
+              >
+                Использовать стандартное письмо
+              </button>
+              <p className="mt-1 text-sm text-gray-500">Сопроводительное письмо будет отправлено вместе с откликом, если требуется.</p>
+            </div>
+          )}
         </div>
         
         {/* Actions */}
