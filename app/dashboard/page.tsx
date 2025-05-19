@@ -144,7 +144,7 @@ export default function Dashboard() {
           <div className="px-4 sm:px-0">
             {/* User Profile Card */}
             <div className="bg-white shadow rounded-lg p-6">
-              <h2 className="text-xl font-semibold mb-4">Информация о пользователе</h2>
+              <h2 className="text-xl font-semibold mb-4 text-black">Информация о пользователе</h2>
               
               {user && (
                 <div className="space-y-3">
@@ -354,7 +354,7 @@ export default function Dashboard() {
                   <h2 className="text-xl font-semibold">Результаты поиска</h2>
                   <button
                     onClick={() => setActiveTab('welcome')}
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm text-black font-medium"
                   >
                     Вернуться
                   </button>
@@ -419,10 +419,10 @@ export default function Dashboard() {
             {activeTab === 'filter' && (
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Настройка поиска</h2>
+                  <h2 className="text-xl font-semibold text-black">Настройка поиска</h2>
                   <button
                     onClick={() => setActiveTab('welcome')}
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm text-black font-medium"
                   >
                     Вернуться
                   </button>
@@ -435,12 +435,12 @@ export default function Dashboard() {
             {(activeTab === 'autoApply' || activeTab === 'history') && (
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">
+                  <h2 className="text-xl font-semibold text-black">
                     {activeTab === 'autoApply' ? 'Автоматический отклик' : 'История откликов'}
                   </h2>
                   <button
                     onClick={() => setActiveTab('welcome')}
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm"
+                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm text-black font-medium"
                   >
                     Вернуться
                   </button>

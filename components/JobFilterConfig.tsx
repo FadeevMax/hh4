@@ -348,7 +348,7 @@ export default function JobFilterConfig({
   
   return (
     <div className="bg-white shadow rounded-lg p-6 mt-6">
-      <h2 className="text-xl font-semibold mb-4">Настройки поиска и автоотклика</h2>
+      <h2 className="text-xl font-semibold mb-4 text-black">Настройки поиска и автоотклика</h2>
       
       <div className="space-y-6">
         {/* Resume selection */}
@@ -381,7 +381,7 @@ export default function JobFilterConfig({
             name="jobTitle"
             value={filter.jobTitle}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
             placeholder="Например: Python разработчик"
           />
           <p className="mt-1 text-sm text-gray-700">Введите название должности для поиска</p>
@@ -397,7 +397,7 @@ export default function JobFilterConfig({
             name="keywordsInclude"
             value={filter.keywordsInclude}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
             rows={3}
             placeholder="Например: Python, Django, Flask (разделяйте запятыми)"
           />
@@ -414,7 +414,7 @@ export default function JobFilterConfig({
             name="keywordsExclude"
             value={filter.keywordsExclude}
             onChange={handleChange}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
             rows={3}
             placeholder="Например: PHP, 1C, Bitrix (разделяйте запятыми)"
           />
@@ -433,7 +433,7 @@ export default function JobFilterConfig({
               name="minSalary"
               value={filter.minSalary}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
               placeholder="Например: 100000"
             />
           </div>
@@ -447,7 +447,7 @@ export default function JobFilterConfig({
               name="maxSalary"
               value={filter.maxSalary}
               onChange={handleChange}
-              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+              className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
               placeholder="Например: 250000"
             />
           </div>
@@ -464,7 +464,7 @@ export default function JobFilterConfig({
             name="locationName"
             value={filter.locationName || ''}
             onChange={handleRegionInput}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
             placeholder="Начните вводить название города или региона"
             autoComplete="off"
           />
@@ -517,7 +517,7 @@ export default function JobFilterConfig({
                 name="coverLetter"
                 value={filter.coverLetter}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-700"
                 rows={4}
                 placeholder="Введите сопроводительное письмо (опционально)"
               />
