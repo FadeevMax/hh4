@@ -8,6 +8,7 @@ interface JobFilter {
   minSalary: string;
   maxSalary: string;
   location: string;
+  locationName?: string;
   autoApply: boolean;
   coverLetter?: string;
 }
@@ -18,6 +19,16 @@ interface JobFilterConfigProps {
   onFilterSave?: () => void;
   onFilterReset?: () => void;
 }
+
+// Add static regions for autocomplete
+const regions: { id: string; name: string }[] = [
+  { id: '1', name: 'Москва' },
+  { id: '2', name: 'Санкт-Петербург' },
+  { id: '3', name: 'Екатеринбург' },
+  { id: '4', name: 'Новосибирск' },
+  { id: '5', name: 'Нижний Новгород' },
+  // ... add more as needed
+];
 
 export default function JobFilterConfig({ 
   onSearchResults, 
@@ -41,6 +52,7 @@ export default function JobFilterConfig({
   const [autoApplyResults, setAutoApplyResults] = useState<HHVacancy[]>([]);
   const [showCoverLetter, setShowCoverLetter] = useState<boolean>(false);
   const defaultCoverLetter = 'Здравствуйте, очень заинтересовала вакансия';
+  const [regionSuggestions, setRegionSuggestions] = useState<{id: string, name: string}[]>([]);
   
   // Load saved filter from localStorage on initial load
   useEffect(() => {
@@ -125,6 +137,23 @@ export default function JobFilterConfig({
     }
   };
   
+  // Autocomplete for region
+  const handleRegionInput = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setFilter(prev => ({ ...prev, locationName: value }));
+    if (value.length > 1) {
+      setRegionSuggestions(
+        regions.filter((r: { id: string; name: string }) => r.name.toLowerCase().includes(value.toLowerCase()))
+      );
+    } else {
+      setRegionSuggestions([]);
+    }
+  };
+  const handleRegionSelect = (region: {id: string, name: string}) => {
+    setFilter(prev => ({ ...prev, location: region.id, locationName: region.name }));
+    setRegionSuggestions([]);
+  };
+  
   const handleSearch = async () => {
     try {
       setIsSearching(true);
@@ -193,14 +222,7 @@ export default function JobFilterConfig({
       // Add area (region) parameter - use Moscow (1) as default if not specified
       // Area must be a number ID according to HH.ru areas directory
       if (filter.location) {
-        // If location is a number, use it directly
-        if (!isNaN(Number(filter.location))) {
-          queryParams.append('area', filter.location);
-        } else {
-          // Default to Moscow (1) if text was entered
-          console.log('Using default area 1 (Moscow) as location is not a number');
-          queryParams.append('area', '1');
-        }
+        queryParams.append('area', filter.location);
       }
       
       // Set page size
@@ -274,7 +296,8 @@ export default function JobFilterConfig({
               },
               body: JSON.stringify({
                 vacancyId: vacancy.id,
-                resumeId: selectedResumeId
+                resumeId: selectedResumeId,
+                coverLetter: filter.coverLetter || undefined
               })
             });
             const applyData = await applyRes.json();
@@ -411,23 +434,36 @@ export default function JobFilterConfig({
           </div>
         </div>
         
-        {/* Location */}
+        {/* Location Autocomplete */}
         <div>
-          <label htmlFor="location" className="block text-sm font-medium text-gray-700">
-            Код региона (ID)
+          <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">
+            Город / Регион
           </label>
           <input
-            type="number"
-            id="location"
-            name="location"
-            value={filter.location}
-            onChange={handleChange}
+            type="text"
+            id="locationName"
+            name="locationName"
+            value={filter.locationName || ''}
+            onChange={handleRegionInput}
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
-            placeholder="1"
+            placeholder="Начните вводить название города или региона"
+            autoComplete="off"
           />
+          {regionSuggestions.length > 0 && (
+            <ul className="border border-gray-300 rounded-md mt-1 bg-white max-h-40 overflow-y-auto z-10 relative">
+              {regionSuggestions.map((region) => (
+                <li
+                  key={region.id}
+                  className="px-4 py-2 cursor-pointer hover:bg-red-100"
+                  onClick={() => handleRegionSelect(region)}
+                >
+                  {region.name}
+                </li>
+              ))}
+            </ul>
+          )}
           <p className="mt-1 text-sm text-gray-500">
-            Укажите код региона из справочника HH.ru: 1 - Москва, 2 - Санкт-Петербург, 
-            <a href="https://api.hh.ru/areas" target="_blank" rel="noopener noreferrer" className="text-red-600 hover:underline"> Список регионов</a>
+            Выберите город или регион из списка. Если не найден, будет использован регион по умолчанию (Москва).
           </p>
         </div>
         
