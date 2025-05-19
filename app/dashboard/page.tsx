@@ -128,12 +128,12 @@ export default function Dashboard() {
       <div className="min-h-screen bg-gray-50">
         <header className="bg-white shadow">
           <div className="max-w-7xl mx-auto py-4 px-4 sm:px-6 lg:px-8 flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-900">
+            <h1 className="text-2xl font-bold text-black">
               <span className="text-red-600">hh</span><span className="text-black">Auto</span> - Панель управления
             </h1>
             <button
               onClick={handleLogout}
-              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+              className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition font-bold"
             >
               Выйти
             </button>
@@ -149,32 +149,32 @@ export default function Dashboard() {
               {user && (
                 <div className="space-y-3">
                   <div>
-                    <span className="font-medium">ID на HeadHunter:</span> {user.id}
+                    <span className="font-medium text-black">ID на HeadHunter:</span> {user.id}
                   </div>
                   <div>
-                    <span className="font-medium">Имя:</span> {String(user.firstName || '')}
+                    <span className="font-medium text-black">Имя:</span> {String(user.firstName || '')}
                   </div>
                   <div>
-                    <span className="font-medium">Фамилия:</span> {String(user.lastName || '')}
+                    <span className="font-medium text-black">Фамилия:</span> {String(user.lastName || '')}
                   </div>
                   {user.email && (
                     <div>
-                      <span className="font-medium">Email:</span> {user.email}
+                      <span className="font-medium text-black">Email:</span> {user.email}
                     </div>
                   )}
           <div>
-                    <span className="font-medium">Статус подключения к HH.ru:</span>{' '}
-                    <span className="text-green-600 font-medium">Подключено</span>
+                    <span className="font-medium text-black">Статус подключения к HH.ru:</span>{' '}
+                    <span className="text-green-600 font-bold">Подключено</span>
                   </div>
                 </div>
               )}
 
               {!user && (
                 <div className="text-center py-4">
-                  <p className="text-gray-500">Нет данных пользователя. Пожалуйста, авторизуйтесь.</p>
+                  <p className="text-black">Нет данных пользователя. Пожалуйста, авторизуйтесь.</p>
                   <button
                     onClick={() => router.push('/login')}
-                    className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition"
+                    className="mt-4 px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600 transition font-bold"
                   >
                     Войти через HeadHunter
                   </button>
@@ -208,7 +208,7 @@ export default function Dashboard() {
                     )}
                   </div>
                   <div className="ml-3">
-                    <p className="text-sm">{searchStatus.message}</p>
+                    <p className="text-sm text-black">{searchStatus.message}</p>
                   </div>
                 </div>
               </div>

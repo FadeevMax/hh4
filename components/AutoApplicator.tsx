@@ -303,19 +303,19 @@ export default function AutoApplicator({
         
         {/* Cover Letter */}
         <div>
-          <label htmlFor="coverLetter" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="coverLetter" className="block text-sm font-medium text-black">
             Сопроводительное письмо (опционально)
           </label>
           <textarea
             id="coverLetter"
             value={coverLetter}
             onChange={(e) => setCoverLetter(e.target.value)}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-500"
             rows={4}
             placeholder="Добрый день! Заинтересовала ваша вакансия..."
             disabled={isApplying}
           />
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-700">
             Это письмо будет отправлено с каждым откликом
           </p>
         </div>
@@ -324,10 +324,10 @@ export default function AutoApplicator({
         {isApplying && (
           <div className="mt-4">
             <div className="flex justify-between mb-1">
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-black">
                 Прогресс: {progress.current} из {progress.total}
               </span>
-              <span className="text-sm font-medium text-gray-700">
+              <span className="text-sm font-medium text-black">
                 {Math.round((progress.current / progress.total) * 100)}%
               </span>
             </div>
@@ -337,7 +337,7 @@ export default function AutoApplicator({
                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
               ></div>
             </div>
-            <div className="flex justify-between mt-2 text-sm text-gray-500">
+            <div className="flex justify-between mt-2 text-sm text-gray-700">
               <div>Успешно: {results.applied}</div>
               <div>Ошибок: {results.failed}</div>
             </div>
@@ -379,7 +379,7 @@ export default function AutoApplicator({
               </p>
               <button
                 onClick={() => window.location.href = '/login'}
-                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm"
+                className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 text-sm font-bold"
               >
                 Войти снова
               </button>

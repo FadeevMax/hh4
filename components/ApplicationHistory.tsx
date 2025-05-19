@@ -159,12 +159,12 @@ export default function ApplicationHistory({ userId, onStatusChange }: Applicati
   return (
     <div className="bg-white shadow rounded-lg p-6 mt-6">
       <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">История откликов</h2>
+        <h2 className="text-xl font-semibold text-black">История откликов</h2>
         
         <button
           onClick={() => fetchApplications()}
           disabled={isLoading}
-          className="text-sm px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition disabled:opacity-50"
+          className="text-sm px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 transition disabled:opacity-50 text-black font-bold"
         >
           {isLoading ? 'Загрузка...' : 'Обновить'}
         </button>
@@ -177,13 +177,13 @@ export default function ApplicationHistory({ userId, onStatusChange }: Applicati
         </div>
       ) : applications.length === 0 ? (
         <div className="text-center py-10">
-          <p className="text-gray-500 text-lg">У вас пока нет откликов на вакансии, или необходимо заново авторизоваться.</p>
-          <p className="mt-2 text-gray-500">
+          <p className="text-black text-lg">У вас пока нет откликов на вакансии, или необходимо заново авторизоваться.</p>
+          <p className="mt-2 text-black">
             Используйте функцию автоматического отклика или откликайтесь вручную на интересующие вас вакансии.
           </p>
           <button
             onClick={() => window.location.href = '/login'}
-            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
+            className="mt-4 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 font-bold"
           >
             Войти снова
           </button>

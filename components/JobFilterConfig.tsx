@@ -464,7 +464,7 @@ export default function JobFilterConfig({
             name="locationName"
             value={filter.locationName || ''}
             onChange={handleRegionInput}
-            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-500"
             placeholder="Начните вводить название города или региона"
             autoComplete="off"
           />
@@ -481,7 +481,7 @@ export default function JobFilterConfig({
               ))}
             </ul>
           )}
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-gray-700">
             Выберите город или регион из списка. Если не найден, будет использован регион по умолчанию (Москва).
           </p>
         </div>
@@ -496,7 +496,7 @@ export default function JobFilterConfig({
             onChange={handleChange}
             className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
           />
-          <label htmlFor="autoApply" className="ml-2 block text-sm text-gray-700">
+          <label htmlFor="autoApply" className="ml-2 block text-sm text-black">
             Автоматически откликаться на подходящие вакансии
           </label>
         </div>
@@ -506,7 +506,7 @@ export default function JobFilterConfig({
           <button
             type="button"
             onClick={() => setShowCoverLetter((prev) => !prev)}
-            className="mb-2 px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm"
+            className="mb-2 px-4 py-2 bg-gray-100 rounded hover:bg-gray-200 text-sm text-black"
           >
             {showCoverLetter ? 'Убрать сопроводительное письмо' : 'Добавить сопроводительное письмо'}
           </button>
@@ -517,18 +517,18 @@ export default function JobFilterConfig({
                 name="coverLetter"
                 value={filter.coverLetter}
                 onChange={handleChange}
-                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500 text-black placeholder-gray-500"
                 rows={4}
                 placeholder="Введите сопроводительное письмо (опционально)"
               />
               <button
                 type="button"
                 onClick={() => setFilter(prev => ({ ...prev, coverLetter: defaultCoverLetter }))}
-                className="mt-2 px-3 py-1 bg-green-100 rounded hover:bg-green-200 text-sm"
+                className="mt-2 px-3 py-1 bg-green-100 rounded hover:bg-green-200 text-sm text-black"
               >
                 Использовать стандартное письмо
               </button>
-              <p className="mt-1 text-sm text-gray-500">Сопроводительное письмо будет отправлено вместе с откликом, если требуется.</p>
+              <p className="mt-1 text-sm text-gray-700">Сопроводительное письмо будет отправлено вместе с откликом, если требуется.</p>
             </div>
           )}
         </div>
@@ -565,7 +565,7 @@ export default function JobFilterConfig({
           <button
             type="button"
             onClick={handleReset}
-            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
+            className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md shadow-sm text-black bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
           >
             Сбросить
           </button>
