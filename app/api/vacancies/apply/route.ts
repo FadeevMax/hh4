@@ -5,7 +5,8 @@ import ApplicationModel from '@/lib/models/application';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, vacancyId, resumeId, coverLetter } = body;
+    const { userId, vacancyId, resumeId, coverLetter, message } = body;
+    const coverLetterToSend = coverLetter || message;
 
     // Allow access token from Authorization header if userId is not provided
     let accessToken = null;
@@ -72,7 +73,7 @@ export async function POST(request: NextRequest) {
     const formData = new FormData();
     formData.append('vacancy_id', vacancyId);
     formData.append('resume_id', resumeId);
-    if (coverLetter) formData.append('message', coverLetter);
+    if (coverLetterToSend) formData.append('message', coverLetterToSend);
 
     // Apply to the vacancy
     const applyResponse = await fetch(`https://api.hh.ru/negotiations`, {
