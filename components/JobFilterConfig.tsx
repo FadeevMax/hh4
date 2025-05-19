@@ -20,15 +20,23 @@ interface JobFilterConfigProps {
   onFilterReset?: () => void;
 }
 
-// Add static regions for autocomplete
-const regions: { id: string; name: string }[] = [
-  { id: '1', name: 'Москва' },
-  { id: '2', name: 'Санкт-Петербург' },
-  { id: '3', name: 'Екатеринбург' },
-  { id: '4', name: 'Новосибирск' },
-  { id: '5', name: 'Нижний Новгород' },
-  // ... add more as needed
-];
+// Helper to flatten nested areas
+interface AreaNode {
+  id: string;
+  name: string;
+  areas?: AreaNode[];
+}
+function flattenAreas(areas: AreaNode[], parentName = ''): { id: string; name: string }[] {
+  let flat: { id: string; name: string }[] = [];
+  for (const area of areas) {
+    const fullName = parentName ? `${parentName}, ${area.name}` : area.name;
+    flat.push({ id: area.id, name: fullName });
+    if (area.areas && area.areas.length > 0) {
+      flat = flat.concat(flattenAreas(area.areas, fullName));
+    }
+  }
+  return flat;
+}
 
 export default function JobFilterConfig({ 
   onSearchResults, 
@@ -53,6 +61,7 @@ export default function JobFilterConfig({
   const [showCoverLetter, setShowCoverLetter] = useState<boolean>(false);
   const defaultCoverLetter = 'Здравствуйте, очень заинтересовала вакансия';
   const [regionSuggestions, setRegionSuggestions] = useState<{id: string, name: string}[]>([]);
+  const [allRegions, setAllRegions] = useState<{id: string, name: string}[]>([]);
   
   // Load saved filter from localStorage on initial load
   useEffect(() => {
@@ -83,6 +92,16 @@ export default function JobFilterConfig({
       }
     };
     fetchResumes();
+  }, []);
+  
+  // Fetch and flatten regions from HH.ru API on mount
+  useEffect(() => {
+    fetch('https://api.hh.ru/areas')
+      .then(res => res.json())
+      .then(data => {
+        setAllRegions(flattenAreas(data));
+      })
+      .catch(() => setAllRegions([]));
   }, []);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -141,9 +160,9 @@ export default function JobFilterConfig({
   const handleRegionInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setFilter(prev => ({ ...prev, locationName: value }));
-    if (value.length > 1) {
+    if (value.length > 1 && allRegions.length > 0) {
       setRegionSuggestions(
-        regions.filter((r: { id: string; name: string }) => r.name.toLowerCase().includes(value.toLowerCase()))
+        allRegions.filter(r => r.name.toLowerCase().includes(value.toLowerCase()))
       );
     } else {
       setRegionSuggestions([]);
