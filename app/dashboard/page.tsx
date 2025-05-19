@@ -149,20 +149,20 @@ export default function Dashboard() {
               {user && (
                 <div className="space-y-3">
                   <div>
-                    <span className="font-medium text-black">ID на HeadHunter:</span> {user.id}
+                    <span className="font-medium text-black">ID на HeadHunter:</span> <span className="text-black">{user.id}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-black">Имя:</span> {String(user.firstName || '')}
+                    <span className="font-medium text-black">Имя:</span> <span className="text-black">{String(user.firstName || '')}</span>
                   </div>
                   <div>
-                    <span className="font-medium text-black">Фамилия:</span> {String(user.lastName || '')}
+                    <span className="font-medium text-black">Фамилия:</span> <span className="text-black">{String(user.lastName || '')}</span>
                   </div>
                   {user.email && (
                     <div>
-                      <span className="font-medium text-black">Email:</span> {user.email}
+                      <span className="font-medium text-black">Email:</span> <span className="text-black">{user.email}</span>
                     </div>
                   )}
-          <div>
+                  <div>
                     <span className="font-medium text-black">Статус подключения к HH.ru:</span>{' '}
                     <span className="text-green-600 font-bold">Подключено</span>
                   </div>
@@ -304,17 +304,17 @@ export default function Dashboard() {
                           Просмотр истории ваших откликов на вакансии, отслеживание статусов и обновлений.
                         </dd>
                       </div>
-          </div>
+                    </div>
                     <div className="mt-5">
-          <button
+                      <button
                         onClick={loadApplicationHistory}
                         className="w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500"
-          >
+                      >
                         Просмотреть историю
-          </button>
+                      </button>
                     </div>
                   </div>
-        </div>
+                </div>
 
                 {/* Results Card */}
                 {vacancies.length > 0 && (
@@ -344,8 +344,8 @@ export default function Dashboard() {
                     </div>
                   </div>
                 )}
-          </div>
-        )}
+              </div>
+            )}
 
             {/* Results view */}
             {activeTab === 'results' && (
@@ -387,19 +387,19 @@ export default function Dashboard() {
                         </tr>
                       </thead>
                       <tbody className="bg-white divide-y divide-gray-200">
-          {vacancies.map((vacancy) => (
+                        {vacancies.map((vacancy) => (
                           <tr key={vacancy.id}>
                             <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
-                  {vacancy.name}
+                              {vacancy.name}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {vacancy.employer.name}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {vacancy.employer.name}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
                               {formatSalary(vacancy.salary)}
                             </td>
-                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                  {vacancy.area.name}
+                            <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                              {vacancy.area.name}
                             </td>
                             <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                               <a href={vacancy.alternate_url} target="_blank" rel="noopener noreferrer" className="text-red-600 hover:text-red-900 mr-4">
@@ -446,9 +446,9 @@ export default function Dashboard() {
                   </button>
                 </div>
                 {componentToRender}
-            </div>
+              </div>
             )}
-        </div>
+          </div>
         </main>
       </div>
     </ProtectedRoute>

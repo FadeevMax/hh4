@@ -353,7 +353,7 @@ export default function JobFilterConfig({
       <div className="space-y-6">
         {/* Resume selection */}
         <div>
-          <label htmlFor="resume" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="resume" className="block text-sm font-medium text-black">
             Выберите резюме для отклика
           </label>
           <select
@@ -372,7 +372,7 @@ export default function JobFilterConfig({
         
         {/* Job Title */}
         <div>
-          <label htmlFor="jobTitle" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="jobTitle" className="block text-sm font-medium text-black">
             Должность / Название вакансии
           </label>
           <input
@@ -384,12 +384,12 @@ export default function JobFilterConfig({
             className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
             placeholder="Например: Python разработчик"
           />
-          <p className="mt-1 text-sm text-gray-500">Введите название должности для поиска</p>
+          <p className="mt-1 text-sm text-gray-700">Введите название должности для поиска</p>
         </div>
         
         {/* Keywords to Include */}
         <div>
-          <label htmlFor="keywordsInclude" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="keywordsInclude" className="block text-sm font-medium text-black">
             Ключевые слова для включения
           </label>
           <textarea
@@ -401,12 +401,12 @@ export default function JobFilterConfig({
             rows={3}
             placeholder="Например: Python, Django, Flask (разделяйте запятыми)"
           />
-          <p className="mt-1 text-sm text-gray-500">Вакансии должны содержать эти ключевые слова</p>
+          <p className="mt-1 text-sm text-gray-700">Вакансии должны содержать эти ключевые слова</p>
         </div>
         
         {/* Keywords to Exclude */}
         <div>
-          <label htmlFor="keywordsExclude" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="keywordsExclude" className="block text-sm font-medium text-black">
             Ключевые слова для исключения
           </label>
           <textarea
@@ -418,13 +418,13 @@ export default function JobFilterConfig({
             rows={3}
             placeholder="Например: PHP, 1C, Bitrix (разделяйте запятыми)"
           />
-          <p className="mt-1 text-sm text-gray-500">Вакансии, содержащие эти слова, будут исключены</p>
+          <p className="mt-1 text-sm text-gray-700">Вакансии, содержащие эти слова, будут исключены</p>
         </div>
         
         {/* Salary Range */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label htmlFor="minSalary" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="minSalary" className="block text-sm font-medium text-black">
               Минимальная зарплата (руб.)
             </label>
             <input
@@ -438,7 +438,7 @@ export default function JobFilterConfig({
             />
           </div>
           <div>
-            <label htmlFor="maxSalary" className="block text-sm font-medium text-gray-700">
+            <label htmlFor="maxSalary" className="block text-sm font-medium text-black">
               Максимальная зарплата (руб.)
             </label>
             <input
@@ -455,7 +455,7 @@ export default function JobFilterConfig({
         
         {/* Location Autocomplete */}
         <div>
-          <label htmlFor="locationName" className="block text-sm font-medium text-gray-700">
+          <label htmlFor="locationName" className="block text-sm font-medium text-black">
             Город / Регион
           </label>
           <input
