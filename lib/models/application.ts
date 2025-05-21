@@ -13,6 +13,7 @@ export interface Application {
   appliedAt: number;
   status: 'applied' | 'viewed' | 'invited' | 'rejected' | 'cancelled';
   url: string;
+  coverLetter?: string;
 }
 
 // Define application schema
@@ -29,7 +30,8 @@ const applicationSchema = new mongoose.Schema<Application>({
     required: true,
     enum: ['applied', 'viewed', 'invited', 'rejected', 'cancelled']
   },
-  url: { type: String, required: true }
+  url: { type: String, required: true },
+  coverLetter: { type: String, required: false }
 });
 
 // Create compound index for userId and vacancyId

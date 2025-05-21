@@ -126,7 +126,8 @@ export async function POST(request: NextRequest) {
         location: vacancyData.area.name,
         appliedAt: Date.now(),
         status: 'applied',
-        url: vacancyData.alternate_url
+        url: vacancyData.alternate_url,
+        coverLetter: coverLetterToSend || ''
       });
     }
 

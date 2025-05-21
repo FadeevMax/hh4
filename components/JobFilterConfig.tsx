@@ -11,6 +11,7 @@ interface JobFilter {
   locationName?: string;
   autoApply: boolean;
   coverLetter?: string;
+  limit?: number;
 }
 
 interface JobFilterConfigProps {
@@ -51,7 +52,7 @@ export default function JobFilterConfig({
     minSalary: '',
     maxSalary: '',
     location: '',
-    autoApply: false,
+    limit: 20,
     coverLetter: ''
   });
   const [isSearching, setIsSearching] = useState(false);
@@ -134,7 +135,7 @@ export default function JobFilterConfig({
       minSalary: '',
       maxSalary: '',
       location: '',
-      autoApply: false,
+      limit: 20,
       coverLetter: ''
     });
     
@@ -245,7 +246,7 @@ export default function JobFilterConfig({
       }
       
       // Set page size
-      queryParams.append('per_page', '20');
+      queryParams.append('per_page', filter.limit?.toString() || '20');
       
       console.log('Search params:', Object.fromEntries(queryParams));
 
@@ -300,40 +301,6 @@ export default function JobFilterConfig({
       
       if (onStatusChange) {
         onStatusChange('success', `Найдено ${results.length} вакансий`);
-      }
-      
-      // Auto-apply logic
-      if (filter.autoApply && selectedResumeId && results.length > 0) {
-        const applyResults: HHVacancy[] = [];
-        for (const vacancy of results) {
-          try {
-            const applyRes = await fetch('/api/vacancies/apply', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${accessToken}`
-              },
-              body: JSON.stringify({
-                vacancyId: vacancy.id,
-                resumeId: selectedResumeId,
-                coverLetter: filter.coverLetter || undefined
-              })
-            });
-            const applyData = await applyRes.json();
-            applyResults.push({
-              ...vacancy,
-              success: applyRes.ok,
-              response: applyData
-            });
-          } catch (err) {
-            applyResults.push({
-              ...vacancy,
-              success: false,
-              response: { error: err instanceof Error ? err.message : String(err) }
-            });
-          }
-        }
-        setAutoApplyResults(applyResults);
       }
       
     } catch (error) {
@@ -486,19 +453,24 @@ export default function JobFilterConfig({
           </p>
         </div>
         
-        {/* Auto Apply Toggle */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="autoApply"
-            name="autoApply"
-            checked={filter.autoApply}
-            onChange={handleChange}
-            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-          />
-          <label htmlFor="autoApply" className="ml-2 block text-sm text-black">
-            Автоматически откликаться на подходящие вакансии
+        {/* Limit */}
+        <div>
+          <label htmlFor="limit" className="block text-sm font-medium text-black">
+            Количество вакансий для отображения
           </label>
+          <select
+            id="limit"
+            name="limit"
+            value={filter.limit}
+            onChange={handleChange}
+            className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+          >
+            <option value={20}>20</option>
+            <option value={50}>50</option>
+            <option value={100}>100</option>
+            <option value={150}>150</option>
+          </select>
+          <p className="mt-1 text-sm text-gray-700">Выберите, сколько вакансий показывать за раз</p>
         </div>
         
         {/* Cover Letter Toggle */}
@@ -570,19 +542,6 @@ export default function JobFilterConfig({
             Сбросить
           </button>
         </div>
-        {/* Auto-apply results summary */}
-        {autoApplyResults.length > 0 && (
-          <div className="mt-6">
-            <h3 className="text-lg font-semibold mb-2">Результаты автоотклика</h3>
-            <ul className="space-y-2">
-              {autoApplyResults.map((res) => (
-                <li key={res.id} className={res.success ? 'text-green-700' : 'text-red-700'}>
-                  <span className="font-medium">{res.name}</span> — {res.success ? 'Отклик отправлен' : `Ошибка: ${res.response?.error || 'Неизвестная ошибка'}`}
-                </li>
-              ))}
-            </ul>
-          </div>
-        )}
       </div>
     </div>
   );

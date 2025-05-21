@@ -76,21 +76,6 @@ export default function Dashboard() {
     setFilterActive(false);
   };
 
-  // Dynamically import components only when needed to prevent auto-API calls
-  const loadAutoApplicator = () => {
-    import('@/components/AutoApplicator').then((module) => {
-      const AutoApplicator = module.default;
-      setActiveTab('autoApply');
-      setComponentToRender(
-        <AutoApplicator 
-          userId={user?.id ?? ''}
-          filterActive={filterActive}
-          onStatusChange={handleStatusChange}
-        />
-      );
-    });
-  };
-
   const loadApplicationHistory = () => {
     import('@/components/ApplicationHistory').then((module) => {
       const ApplicationHistory = module.default;
@@ -257,38 +242,6 @@ export default function Dashboard() {
                   </div>
                 </div>
 
-                {/* Auto Apply Card */}
-                <div className="bg-white overflow-hidden shadow rounded-lg">
-                  <div className="p-5">
-                    <div className="flex items-center">
-                      <div className="flex-shrink-0 bg-red-100 rounded-md p-3">
-                        <svg className="h-6 w-6 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                      </div>
-                      <div className="ml-5 w-0 flex-1">
-                        <dt className="text-lg font-medium text-gray-900">Автоматический отклик</dt>
-                        <dd className="mt-2 text-base text-gray-500">
-                          Автоматическое применение к вакансиям, соответствующим вашим фильтрам, с выбранным резюме.
-                        </dd>
-                      </div>
-                    </div>
-                    <div className="mt-5">
-                      <button
-                        onClick={loadAutoApplicator}
-                        disabled={!filterActive}
-                        className={`w-full inline-flex items-center justify-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white ${
-                          filterActive 
-                            ? 'bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500' 
-                            : 'bg-gray-300 cursor-not-allowed'
-                        }`}
-                      >
-                        {filterActive ? 'Запустить автоотклик' : 'Сначала настройте фильтр'}
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
                 {/* History Card */}
                 <div className="bg-white overflow-hidden shadow rounded-lg">
                   <div className="p-5">
@@ -432,11 +385,11 @@ export default function Dashboard() {
             )}
             
             {/* Dynamically loaded content for auto-apply and history */}
-            {(activeTab === 'autoApply' || activeTab === 'history') && (
+            {(activeTab === 'history') && (
               <div className="mt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold text-black">
-                    {activeTab === 'autoApply' ? 'Автоматический отклик' : 'История откликов'}
+                    История откликов
                   </h2>
                   <button
                     onClick={() => setActiveTab('welcome')}
