@@ -10,6 +10,7 @@ interface Application {
   updatedAt: string;
   hasUpdates: boolean;
   url: string;
+  coverLetter?: string;
 }
 
 interface ApplicationHistoryProps {
@@ -206,6 +207,9 @@ export default function ApplicationHistory({ userId, onStatusChange }: Applicati
                   <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
                     Дата отклика
                   </th>
+                  <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-black uppercase tracking-wider">
+                    Сопроводительное письмо
+                  </th>
                   <th scope="col" className="px-6 py-3 text-right text-xs font-medium text-black uppercase tracking-wider">
                     Действия
                   </th>
@@ -232,6 +236,9 @@ export default function ApplicationHistory({ userId, onStatusChange }: Applicati
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-black">
                       {formatDate(app.createdAt)}
+                    </td>
+                    <td className="px-6 py-4 whitespace-pre-line text-sm text-black max-w-xs break-words">
+                      {app.coverLetter ? app.coverLetter : <span className="text-gray-400">—</span>}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <a 
