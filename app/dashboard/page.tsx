@@ -153,6 +153,7 @@ export default function Dashboard() {
       return;
     }
     
+    // Use either the selected resume or the one used for search
     const resumeIdToUse = selectedResumeId || searchResumeId;
     
     if (!resumeIdToUse) {
@@ -173,51 +174,60 @@ export default function Dashboard() {
       let successCount = 0;
       let failCount = 0;
       
-      // Get user ID and access token
-      const userData = localStorage.getItem('user');
+      // Get access token
       const accessToken = localStorage.getItem('accessToken');
       const coverLetter = localStorage.getItem('jobFilter') 
         ? JSON.parse(localStorage.getItem('jobFilter') || '{}').coverLetter || undefined
         : undefined;
       
-      if (!userData || !accessToken) {
+      if (!accessToken) {
         throw new Error('Необходима авторизация. Пожалуйста, войдите снова.');
       }
-      
-      const user = JSON.parse(userData);
       
       // Apply to each vacancy
       for (const vacancy of vacancies) {
         try {
-          const applyResponse = await fetch('/api/vacancies/apply', {
+          // Create FormData for multipart/form-data request
+          const formData = new FormData();
+          formData.append('resume_id', resumeIdToUse);
+          formData.append('vacancy_id', vacancy.id);
+          
+          // Add cover letter if available
+          if (coverLetter && coverLetter.trim()) {
+            formData.append('message', coverLetter.trim());
+          }
+          
+          // Make the API request
+          const applyResponse = await fetch('/api/negotiations', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`
+              'Authorization': `Bearer ${accessToken}`,
+              // Don't set Content-Type for FormData, browser will set it with boundary
             },
-            body: JSON.stringify({
-              vacancyId: vacancy.id,
-              resumeId: resumeIdToUse,
-              coverLetter: coverLetter,
-              userId: user.id
-            })
+            body: formData
           });
           
-          const applyData = await applyResponse.json();
-          
-          if (applyResponse.ok) {
+          if (applyResponse.ok || applyResponse.status === 201 || applyResponse.status === 303) {
             successCount++;
             setSearchStatus({
               status: 'loading',
               message: `Отклики отправлены: ${successCount} из ${vacancies.length}`
             });
           } else {
+            // Try to get error information
+            let errorData;
+            try {
+              errorData = await applyResponse.json();
+            } catch {
+              errorData = { description: `Ошибка ${applyResponse.status}` };
+            }
+            
             failCount++;
-            console.error('Apply error:', applyData);
+            console.error('Apply error:', errorData);
           }
           
           // Add a small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1200));
           
         } catch (applyError) {
           failCount++;

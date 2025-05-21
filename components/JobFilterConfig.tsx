@@ -360,12 +360,6 @@ export default function JobFilterConfig({
       if (onStatusChange) {
         onStatusChange('success', `Найдено ${results.length} вакансий`);
       }
-      
-      // Automatically apply if that option is selected
-      if (filter.autoApply && results.length > 0 && selectedResumeId) {
-        // Apply after a small delay to update UI
-        setTimeout(() => handleApply(), 1000);
-      }
     } catch (error) {
       console.error('Search error:', error);
       if (onStatusChange) {
@@ -409,39 +403,49 @@ export default function JobFilterConfig({
         throw new Error('Необходима авторизация. Пожалуйста, войдите снова.');
       }
       
-      const user = JSON.parse(userData);
-      
       // Apply to each vacancy
       for (const vacancy of searchResults) {
         try {
-          const applyResponse = await fetch('/api/vacancies/apply', {
+          // Create a FormData object for multipart/form-data request
+          const formData = new FormData();
+          formData.append('resume_id', selectedResumeId);
+          formData.append('vacancy_id', vacancy.id);
+          
+          // Add cover letter if available
+          if (filter.coverLetter && filter.coverLetter.trim()) {
+            formData.append('message', filter.coverLetter.trim());
+          }
+          
+          // Make the API request directly to HH.ru through our proxy
+          const applyResponse = await fetch('/api/negotiations', {
             method: 'POST',
             headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${accessToken}`
+              'Authorization': `Bearer ${accessToken}`,
+              // Don't set Content-Type for FormData, browser will set it with boundary
             },
-            body: JSON.stringify({
-              vacancyId: vacancy.id,
-              resumeId: selectedResumeId,
-              coverLetter: filter.coverLetter || undefined,
-              userId: user.id
-            })
+            body: formData
           });
           
-          const applyData = await applyResponse.json();
-          
-          if (applyResponse.ok) {
+          if (applyResponse.ok || applyResponse.status === 201 || applyResponse.status === 303) {
             successCount++;
             if (onStatusChange) {
               onStatusChange('loading', `Отклики отправлены: ${successCount} из ${searchResults.length}`);
             }
           } else {
+            // Try to get error information
+            let errorData;
+            try {
+              errorData = await applyResponse.json();
+            } catch {
+              errorData = { description: `Ошибка ${applyResponse.status}` };
+            }
+            
             failCount++;
-            console.error('Apply error:', applyData);
+            console.error('Apply error:', errorData);
           }
           
           // Add a small delay to avoid rate limiting
-          await new Promise(resolve => setTimeout(resolve, 1000));
+          await new Promise(resolve => setTimeout(resolve, 1200));
           
         } catch (applyError) {
           failCount++;
@@ -625,21 +629,6 @@ export default function JobFilterConfig({
             <option value={200}>200</option>
           </select>
           <p className="mt-1 text-sm text-gray-700">Выберите, сколько вакансий показывать (до 200, по 100 на странице)</p>
-        </div>
-        
-        {/* Auto-Apply option */}
-        <div className="flex items-center">
-          <input
-            type="checkbox"
-            id="autoApply"
-            name="autoApply"
-            checked={filter.autoApply}
-            onChange={handleChange}
-            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
-          />
-          <label htmlFor="autoApply" className="ml-2 block text-sm text-gray-900">
-            Автоматически откликаться после поиска
-          </label>
         </div>
         
         {/* Cover Letter Toggle */}
