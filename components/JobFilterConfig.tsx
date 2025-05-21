@@ -15,7 +15,7 @@ interface JobFilter {
 }
 
 interface JobFilterConfigProps {
-  onSearchResults?: (results: HHVacancy[]) => void;
+  onSearchResults?: (results: HHVacancy[], resumeId?: string) => void;
   onStatusChange?: (status: 'idle' | 'loading' | 'success' | 'error', message?: string) => void;
   onFilterSave?: () => void;
   onFilterReset?: () => void;
@@ -148,7 +148,7 @@ export default function JobFilterConfig({
     // Clear search results
     setSearchResults([]);
     if (onSearchResults) {
-      onSearchResults([]);
+      onSearchResults([], undefined);
     }
     
     if (onStatusChange) {
@@ -251,42 +251,85 @@ export default function JobFilterConfig({
         queryParams.append('area', filter.location);
       }
       
-      // Set page size
-      queryParams.append('per_page', filter.limit?.toString() || '20');
+      let results: HHVacancy[] = [];
+      let requestedLimit = parseInt(String(filter.limit), 10) || 20;
+      const maxPerPage = 100; // HH.ru API limit per page
+      let pagesNeeded = Math.ceil(requestedLimit / maxPerPage);
       
-      console.log('Search params:', Object.fromEntries(queryParams));
-
-      // Make direct API request to HH.ru via our proxy
-      const apiResponse = await fetch(`/api/vacancies/search?${queryParams.toString()}`, {
-        headers: {
-          'Authorization': `Bearer ${accessToken}`
+      // Always fetch at least 1 page, max 2 pages
+      pagesNeeded = Math.min(Math.max(pagesNeeded, 1), 2);
+      
+      // Update requested limit if we're getting 2 pages
+      if (pagesNeeded === 2) {
+        requestedLimit = Math.min(requestedLimit, 200); // Cap at 200 (2 pages of 100)
+      }
+      
+      // Handle pagination for large result sets
+      for (let page = 0; page < pagesNeeded; page++) {
+        // Set per_page to maxPerPage or the remaining items needed
+        const itemsForThisPage = page === pagesNeeded - 1 && requestedLimit % maxPerPage !== 0
+          ? requestedLimit % maxPerPage
+          : maxPerPage;
+        
+        // Update status for multi-page searches
+        if (pagesNeeded > 1) {
+          onStatusChange?.('loading', `Поиск вакансий (страница ${page + 1}/${pagesNeeded})...`);
         }
-      });
+        
+        // Clone the query params for this page
+        const pageQueryParams = new URLSearchParams(queryParams);
+        pageQueryParams.append('per_page', String(itemsForThisPage));
+        pageQueryParams.append('page', String(page));
+        
+        console.log(`Fetching page ${page + 1} with ${itemsForThisPage} items`);
 
-      // Get the response content
-      const responseText = await apiResponse.text();
-      console.log('Raw API response:', responseText);
-      
-      // Parse the response
-      let apiData = null;
-      try {
-        apiData = responseText ? JSON.parse(responseText) : null;
-      } catch (e) {
-        console.error('Failed to parse API response:', e);
-        throw new Error('Некорректный ответ от сервера');
+        // Make direct API request to HH.ru via our proxy
+        const apiResponse = await fetch(`/api/vacancies/search?${pageQueryParams.toString()}`, {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+
+        // Get the response content
+        const responseText = await apiResponse.text();
+        console.log(`Raw API response for page ${page + 1}:`, responseText);
+        
+        // Parse the response
+        let apiData = null;
+        try {
+          apiData = responseText ? JSON.parse(responseText) : null;
+        } catch (e) {
+          console.error('Failed to parse API response:', e);
+          throw new Error('Некорректный ответ от сервера');
+        }
+        
+        // Check for errors in the response
+        if (!apiResponse.ok) {
+          console.error(`Search API error (status ${apiResponse.status}):`, apiData || 'No body');
+          throw new Error(
+            (apiData && (apiData.error || apiData.description)) || `Ошибка ${apiResponse.status}`
+          );
+        }
+        
+        // Get items for this page
+        const pageResults: HHVacancy[] = Array.isArray(apiData?.items) ? apiData.items : [];
+        
+        // If we got fewer results than requested, don't make more requests
+        if (pageResults.length < itemsForThisPage) {
+          results = [...results, ...pageResults];
+          break;
+        }
+        
+        // Add this page's results to the total
+        results = [...results, ...pageResults];
+        
+        // If we have enough results or hit the last page, stop
+        if (results.length >= requestedLimit || !apiData.pages || page >= apiData.pages - 1) {
+          break;
+        }
       }
       
-      // Check for errors in the response
-      if (!apiResponse.ok) {
-        console.error(`Search API error (status ${apiResponse.status}):`, apiData || 'No body');
-        throw new Error(
-          (apiData && (apiData.error || apiData.description)) || `Ошибка ${apiResponse.status}`
-        );
-      }
-      
-      // Fallback for items
-      let results: HHVacancy[] = Array.isArray(apiData?.items) ? apiData.items : [];
-      
+      // Apply keyword filtering
       if (filter.keywordsExclude) {
         const excludedKeywords = filter.keywordsExclude
           .split(',')
@@ -301,18 +344,28 @@ export default function JobFilterConfig({
         }
       }
       
+      // Limit results to requested number
+      if (results.length > requestedLimit) {
+        results = results.slice(0, requestedLimit);
+      }
+      
       // Store results locally
       setSearchResults(results);
       
-      // Pass results to parent component
+      // Pass results to parent component along with the selected resume ID
       if (onSearchResults) {
-        onSearchResults(results);
+        onSearchResults(results, selectedResumeId);
       }
       
       if (onStatusChange) {
         onStatusChange('success', `Найдено ${results.length} вакансий`);
       }
       
+      // Automatically apply if that option is selected
+      if (filter.autoApply && results.length > 0 && selectedResumeId) {
+        // Apply after a small delay to update UI
+        setTimeout(() => handleApply(), 1000);
+      }
     } catch (error) {
       console.error('Search error:', error);
       if (onStatusChange) {
@@ -569,9 +622,24 @@ export default function JobFilterConfig({
             <option value={20}>20</option>
             <option value={50}>50</option>
             <option value={100}>100</option>
-            <option value={150}>150</option>
+            <option value={200}>200</option>
           </select>
-          <p className="mt-1 text-sm text-gray-700">Выберите, сколько вакансий показывать за раз</p>
+          <p className="mt-1 text-sm text-gray-700">Выберите, сколько вакансий показывать (до 200, по 100 на странице)</p>
+        </div>
+        
+        {/* Auto-Apply option */}
+        <div className="flex items-center">
+          <input
+            type="checkbox"
+            id="autoApply"
+            name="autoApply"
+            checked={filter.autoApply}
+            onChange={handleChange}
+            className="h-4 w-4 text-red-600 focus:ring-red-500 border-gray-300 rounded"
+          />
+          <label htmlFor="autoApply" className="ml-2 block text-sm text-gray-900">
+            Автоматически откликаться после поиска
+          </label>
         </div>
         
         {/* Cover Letter Toggle */}
@@ -632,7 +700,7 @@ export default function JobFilterConfig({
           <button
             type="button"
             onClick={handleApply}
-            disabled={isApplying || searchResults.length === 0}
+            disabled={isApplying || searchResults.length === 0 || !selectedResumeId}
             className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
           >
             {isApplying ? (

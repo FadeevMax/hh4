@@ -25,6 +25,8 @@ export default function Dashboard() {
   const [filterActive, setFilterActive] = useState<boolean>(false);
   const [isApplying, setIsApplying] = useState(false);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
+  const [searchResumeId, setSearchResumeId] = useState<string>('');
+  const [resumes, setResumes] = useState<any[]>([]);
   
   // Only load user data from localStorage, not from API
   useEffect(() => {
@@ -47,6 +49,33 @@ export default function Dashboard() {
     }
   }, [router]);
 
+  // Fetch the user's resumes on component mount
+  useEffect(() => {
+    const fetchResumes = async () => {
+      const accessToken = localStorage.getItem('accessToken');
+      if (!accessToken) return;
+
+      try {
+        const res = await fetch('/api/user/resumes', {
+          headers: {
+            'Authorization': `Bearer ${accessToken}`
+          }
+        });
+        const data = await res.json();
+        if (Array.isArray(data.items)) {
+          setResumes(data.items);
+          if (data.items.length > 0) {
+            setSelectedResumeId(data.items[0].id);
+          }
+        }
+      } catch (e) {
+        console.error('Failed to fetch resumes:', e);
+      }
+    };
+
+    fetchResumes();
+  }, []);
+
   const handleLogout = () => {
     // Clear localStorage
     localStorage.removeItem('accessToken');
@@ -59,8 +88,12 @@ export default function Dashboard() {
     router.push('/login');
   };
   
-  const handleSearchResults = (results: HHVacancy[]) => {
+  const handleSearchResults = (results: HHVacancy[], resumeId?: string) => {
     setVacancies(results);
+    if (resumeId) {
+      setSearchResumeId(resumeId);
+      setSelectedResumeId(resumeId);
+    }
     if (results.length > 0) {
       setActiveTab('results');
     }
@@ -120,7 +153,9 @@ export default function Dashboard() {
       return;
     }
     
-    if (!selectedResumeId) {
+    const resumeIdToUse = selectedResumeId || searchResumeId;
+    
+    if (!resumeIdToUse) {
       setSearchStatus({
         status: 'error',
         message: 'Выберите резюме для отклика'
@@ -162,7 +197,7 @@ export default function Dashboard() {
             },
             body: JSON.stringify({
               vacancyId: vacancy.id,
-              resumeId: selectedResumeId,
+              resumeId: resumeIdToUse,
               coverLetter: coverLetter,
               userId: user.id
             })
@@ -417,7 +452,7 @@ export default function Dashboard() {
                   <div className="flex space-x-2">
                     <button
                       onClick={handleApplyToAll}
-                      disabled={isApplying || vacancies.length === 0}
+                      disabled={isApplying || vacancies.length === 0 || (!selectedResumeId && !searchResumeId)}
                       className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition disabled:opacity-50 text-sm font-medium"
                     >
                       {isApplying ? 'Отправка откликов...' : 'Откликнуться на все'}
@@ -429,6 +464,41 @@ export default function Dashboard() {
                       Вернуться
                     </button>
                   </div>
+                </div>
+                
+                {/* Resume selection for Apply to All */}
+                <div className="mb-4">
+                  <label htmlFor="dashboard-resume" className="block text-sm font-medium text-black mb-1">
+                    Выберите резюме для отклика
+                  </label>
+                  <div className="flex items-center">
+                    <select
+                      id="dashboard-resume"
+                      value={selectedResumeId}
+                      onChange={e => setSelectedResumeId(e.target.value)}
+                      className="block w-full md:w-1/2 border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-red-500 focus:border-red-500"
+                    >
+                      {resumes.length === 0 && <option value="">Нет резюме</option>}
+                      {resumes.map((r) => (
+                        <option key={r.id} value={r.id}>{r.title || r.profession || r.id}</option>
+                      ))}
+                    </select>
+                    {searchResumeId && searchResumeId !== selectedResumeId && (
+                      <button 
+                        onClick={() => setSelectedResumeId(searchResumeId)}
+                        className="ml-2 px-3 py-2 text-sm bg-blue-100 hover:bg-blue-200 rounded text-blue-700"
+                      >
+                        Использовать резюме из поиска
+                      </button>
+                    )}
+                  </div>
+                  {searchResumeId && (
+                    <p className="mt-1 text-sm text-gray-500">
+                      {selectedResumeId === searchResumeId 
+                        ? "Будет использовано то же резюме, что и при поиске" 
+                        : "Вы можете использовать другое резюме или вернуться к тому, что использовалось при поиске"}
+                    </p>
+                  )}
                 </div>
                 
                 {vacancies.length === 0 ? (
