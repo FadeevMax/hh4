@@ -23,6 +23,8 @@ export default function Dashboard() {
     message?: string;
   }>({ status: 'idle' });
   const [filterActive, setFilterActive] = useState<boolean>(false);
+  const [isApplying, setIsApplying] = useState(false);
+  const [selectedResumeId, setSelectedResumeId] = useState<string>('');
   
   // Only load user data from localStorage, not from API
   useEffect(() => {
@@ -107,6 +109,113 @@ export default function Dashboard() {
   
   // Store dynamically loaded component
   const [componentToRender, setComponentToRender] = useState<React.ReactNode>(null);
+
+  // New function to handle apply to all vacancies
+  const handleApplyToAll = async () => {
+    if (vacancies.length === 0) {
+      setSearchStatus({ 
+        status: 'error', 
+        message: 'Нет вакансий для отклика. Сначала выполните поиск.' 
+      });
+      return;
+    }
+    
+    if (!selectedResumeId) {
+      setSearchStatus({
+        status: 'error',
+        message: 'Выберите резюме для отклика'
+      });
+      return;
+    }
+    
+    try {
+      setIsApplying(true);
+      setSearchStatus({
+        status: 'loading',
+        message: 'Отправка откликов...'
+      });
+      
+      let successCount = 0;
+      let failCount = 0;
+      
+      // Get user ID and access token
+      const userData = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
+      const coverLetter = localStorage.getItem('jobFilter') 
+        ? JSON.parse(localStorage.getItem('jobFilter') || '{}').coverLetter || undefined
+        : undefined;
+      
+      if (!userData || !accessToken) {
+        throw new Error('Необходима авторизация. Пожалуйста, войдите снова.');
+      }
+      
+      const user = JSON.parse(userData);
+      
+      // Apply to each vacancy
+      for (const vacancy of vacancies) {
+        try {
+          const applyResponse = await fetch('/api/vacancies/apply', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              vacancyId: vacancy.id,
+              resumeId: selectedResumeId,
+              coverLetter: coverLetter,
+              userId: user.id
+            })
+          });
+          
+          const applyData = await applyResponse.json();
+          
+          if (applyResponse.ok) {
+            successCount++;
+            setSearchStatus({
+              status: 'loading',
+              message: `Отклики отправлены: ${successCount} из ${vacancies.length}`
+            });
+          } else {
+            failCount++;
+            console.error('Apply error:', applyData);
+          }
+          
+          // Add a small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (applyError) {
+          failCount++;
+          console.error('Apply error:', applyError);
+        }
+      }
+      
+      // Final status update
+      if (failCount === 0) {
+        setSearchStatus({
+          status: 'success',
+          message: `Успешно отправлено ${successCount} откликов`
+        });
+      } else {
+        setSearchStatus({
+          status: 'success',
+          message: `Отправлено ${successCount} откликов. ${failCount} откликов не удалось отправить.`
+        });
+      }
+
+      // Load application history after applying
+      setTimeout(loadApplicationHistory, 2000);
+
+    } catch (error) {
+      console.error('Apply error:', error);
+      setSearchStatus({
+        status: 'error',
+        message: error instanceof Error ? error.message : 'Ошибка при отправке откликов'
+      });
+    } finally {
+      setIsApplying(false);
+    }
+  };
 
   return (
     <ProtectedRoute>
@@ -305,12 +414,21 @@ export default function Dashboard() {
               <div className="bg-white shadow rounded-lg p-6 mt-6">
                 <div className="flex justify-between items-center mb-4">
                   <h2 className="text-xl font-semibold">Результаты поиска</h2>
-                  <button
-                    onClick={() => setActiveTab('welcome')}
-                    className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm text-black font-medium"
-                  >
-                    Вернуться
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={handleApplyToAll}
+                      disabled={isApplying || vacancies.length === 0}
+                      className="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700 transition disabled:opacity-50 text-sm font-medium"
+                    >
+                      {isApplying ? 'Отправка откликов...' : 'Откликнуться на все'}
+                    </button>
+                    <button
+                      onClick={() => setActiveTab('welcome')}
+                      className="px-3 py-1 bg-gray-100 hover:bg-gray-200 rounded text-sm text-black font-medium"
+                    >
+                      Вернуться
+                    </button>
+                  </div>
                 </div>
                 
                 {vacancies.length === 0 ? (

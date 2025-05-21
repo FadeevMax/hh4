@@ -53,12 +53,14 @@ export default function JobFilterConfig({
     maxSalary: '',
     location: '',
     limit: 20,
-    coverLetter: ''
+    coverLetter: '',
+    autoApply: false
   });
   const [isSearching, setIsSearching] = useState(false);
+  const [isApplying, setIsApplying] = useState(false);
   const [resumes, setResumes] = useState<HHVacancy[]>([]);
   const [selectedResumeId, setSelectedResumeId] = useState<string>('');
-  const [autoApplyResults, setAutoApplyResults] = useState<HHVacancy[]>([]);
+  const [searchResults, setSearchResults] = useState<HHVacancy[]>([]);
   const [showCoverLetter, setShowCoverLetter] = useState<boolean>(false);
   const defaultCoverLetter = 'Здравствуйте, очень заинтересовала вакансия';
   const [regionSuggestions, setRegionSuggestions] = useState<{id: string, name: string}[]>([]);
@@ -136,13 +138,15 @@ export default function JobFilterConfig({
       maxSalary: '',
       location: '',
       limit: 20,
-      coverLetter: ''
+      coverLetter: '',
+      autoApply: false
     });
     
     // Clear saved filter
     localStorage.removeItem('jobFilter');
     
     // Clear search results
+    setSearchResults([]);
     if (onSearchResults) {
       onSearchResults([]);
     }
@@ -174,10 +178,12 @@ export default function JobFilterConfig({
     setRegionSuggestions([]);
   };
   
+  // Search function - only searches for vacancies without applying
   const handleSearch = async () => {
     try {
       setIsSearching(true);
-      setAutoApplyResults([]);
+      setSearchResults([]);
+      
       if (onStatusChange) {
         onStatusChange('loading', 'Поиск вакансий...');
       }
@@ -295,6 +301,10 @@ export default function JobFilterConfig({
         }
       }
       
+      // Store results locally
+      setSearchResults(results);
+      
+      // Pass results to parent component
       if (onSearchResults) {
         onSearchResults(results);
       }
@@ -310,6 +320,97 @@ export default function JobFilterConfig({
       }
     } finally {
       setIsSearching(false);
+    }
+  };
+  
+  // Apply function - applies to the search results
+  const handleApply = async () => {
+    if (searchResults.length === 0) {
+      if (onStatusChange) {
+        onStatusChange('error', 'Нет вакансий для отклика. Сначала выполните поиск.');
+      }
+      return;
+    }
+    
+    if (!selectedResumeId) {
+      if (onStatusChange) {
+        onStatusChange('error', 'Выберите резюме для отклика');
+      }
+      return;
+    }
+    
+    try {
+      setIsApplying(true);
+      if (onStatusChange) {
+        onStatusChange('loading', 'Отправка откликов...');
+      }
+      
+      let successCount = 0;
+      let failCount = 0;
+      
+      // Get user ID and access token
+      const userData = localStorage.getItem('user');
+      const accessToken = localStorage.getItem('accessToken');
+      
+      if (!userData || !accessToken) {
+        throw new Error('Необходима авторизация. Пожалуйста, войдите снова.');
+      }
+      
+      const user = JSON.parse(userData);
+      
+      // Apply to each vacancy
+      for (const vacancy of searchResults) {
+        try {
+          const applyResponse = await fetch('/api/vacancies/apply', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${accessToken}`
+            },
+            body: JSON.stringify({
+              vacancyId: vacancy.id,
+              resumeId: selectedResumeId,
+              coverLetter: filter.coverLetter || undefined,
+              userId: user.id
+            })
+          });
+          
+          const applyData = await applyResponse.json();
+          
+          if (applyResponse.ok) {
+            successCount++;
+            if (onStatusChange) {
+              onStatusChange('loading', `Отклики отправлены: ${successCount} из ${searchResults.length}`);
+            }
+          } else {
+            failCount++;
+            console.error('Apply error:', applyData);
+          }
+          
+          // Add a small delay to avoid rate limiting
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+        } catch (applyError) {
+          failCount++;
+          console.error('Apply error:', applyError);
+        }
+      }
+      
+      // Final status update
+      if (onStatusChange) {
+        if (failCount === 0) {
+          onStatusChange('success', `Успешно отправлено ${successCount} откликов`);
+        } else {
+          onStatusChange('success', `Отправлено ${successCount} откликов. ${failCount} откликов не удалось отправить.`);
+        }
+      }
+    } catch (error) {
+      console.error('Apply error:', error);
+      if (onStatusChange) {
+        onStatusChange('error', error instanceof Error ? error.message : 'Ошибка при отправке откликов');
+      }
+    } finally {
+      setIsApplying(false);
     }
   };
   
@@ -507,11 +608,12 @@ export default function JobFilterConfig({
         
         {/* Actions */}
         <div className="flex flex-col md:flex-row gap-3 pt-4 border-t border-gray-200">
+          {/* Search Button */}
           <button
             type="button"
             onClick={handleSearch}
             disabled={isSearching}
-            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
           >
             {isSearching ? (
               <>
@@ -526,6 +628,27 @@ export default function JobFilterConfig({
             )}
           </button>
           
+          {/* Apply Button */}
+          <button
+            type="button"
+            onClick={handleApply}
+            disabled={isApplying || searchResults.length === 0}
+            className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-red-600 hover:bg-red-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-500 disabled:opacity-50"
+          >
+            {isApplying ? (
+              <>
+                <svg className="animate-spin -ml-1 mr-3 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                Отклик...
+              </>
+            ) : (
+              'Откликнуться на найденные'
+            )}
+          </button>
+          
+          {/* Save Filter Button */}
           <button
             type="button"
             onClick={handleSave}
@@ -534,6 +657,7 @@ export default function JobFilterConfig({
             Сохранить фильтр
           </button>
           
+          {/* Reset Button */}
           <button
             type="button"
             onClick={handleReset}
@@ -542,6 +666,14 @@ export default function JobFilterConfig({
             Сбросить
           </button>
         </div>
+        
+        {/* Search results message */}
+        {searchResults.length > 0 && (
+          <div className="mt-4 p-4 bg-green-50 text-green-700 rounded-md">
+            <p className="font-medium">Найдено {searchResults.length} вакансий</p>
+            <p className="text-sm mt-1">Вы можете просмотреть результаты или откликнуться на все найденные вакансии.</p>
+          </div>
+        )}
       </div>
     </div>
   );
