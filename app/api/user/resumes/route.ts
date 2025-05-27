@@ -1,77 +1,69 @@
 import { NextRequest, NextResponse } from 'next/server';
-import TokenModel from '@/lib/models/token';
 
 export async function GET(request: NextRequest) {
-  // Add a delay to prevent API overloading
-  await new Promise(resolve => setTimeout(resolve, 500));
-  
   try {
-    // Get user ID from the URL params or from the Authorization header
-    const { searchParams } = new URL(request.url);
-    const userId = searchParams.get('userId');
-
-    // If not provided, try to get access token from Authorization header
-    let accessToken = null;
-    if (!userId) {
-      const authHeader = request.headers.get('Authorization');
-      if (!authHeader || !authHeader.startsWith('Bearer ')) {
-        return NextResponse.json(
-          { error: 'User ID or access token is required' },
-          { status: 400 }
-        );
-      }
-      accessToken = authHeader.substring(7);
+    // Get access token from Authorization header
+    const authHeader = request.headers.get('Authorization');
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      return NextResponse.json(
+        { error: 'Access token is required' },
+        { status: 400 }
+      );
     }
+    const accessToken = authHeader.substring(7);
 
-    // If userId is provided, get token from DB
-    if (userId) {
-      const token = await TokenModel.getLatestToken(userId);
-      if (!token) {
-        return NextResponse.json(
-          { 
-            error: 'No valid token found. Please re-authenticate with HH.ru',
-            requireReauth: true
-          },
-          { status: 401 }
-        );
-      }
-      accessToken = token.accessToken;
-    }
-
-    // Call HH.ru API to get user's resumes
-    const response = await fetch('https://api.hh.ru/resumes/mine', {
+    // First check if user is a job seeker
+    const meResponse = await fetch('https://api.hh.ru/me', {
       headers: {
         'Authorization': `Bearer ${accessToken}`,
         'HH-User-Agent': 'hh-auto-apply/1.0 (maxfade@gmail.com)'
       }
     });
 
-    if (!response.ok) {
-      if (response.status === 401) {
-        return NextResponse.json(
-          { 
-            error: 'Unauthorized. Token expired.',
-            requireReauth: true 
-          },
-          { status: 401 }
-        );
-      }
-      const errorText = await response.text();
+    if (!meResponse.ok) {
       return NextResponse.json(
-        { error: `Error fetching resumes: ${response.status}`, details: errorText },
-        { status: response.status }
+        { error: 'Failed to get user info' },
+        { status: meResponse.status }
       );
     }
 
-    const data = await response.json();
-    return NextResponse.json({
-      items: data.items || [],
-      found: data.found || 0
+    const userData = await meResponse.json();
+
+    // Check if user has resumes
+    const resumesResponse = await fetch('https://api.hh.ru/resumes/mine', {
+      headers: {
+        'Authorization': `Bearer ${accessToken}`,
+        'HH-User-Agent': 'hh-auto-apply/1.0 (maxfade@gmail.com)'
+      }
     });
 
-  } catch {
+    if (!resumesResponse.ok) {
+      // If we get 403, it means user is not a job seeker
+      if (resumesResponse.status === 403) {
+        return NextResponse.json({
+          items: [],
+          message: 'User is not registered as a job seeker'
+        });
+      }
+      
+      return NextResponse.json(
+        { error: 'Failed to fetch resumes' },
+        { status: resumesResponse.status }
+      );
+    }
+
+    const resumesData = await resumesResponse.json();
+
+    // Return the resumes
+    return NextResponse.json({
+      items: resumesData.items || [],
+      found: resumesData.found || 0
+    });
+
+  } catch (error) {
+    console.error('Error in /api/user/resumes:', error);
     return NextResponse.json(
-      { error: 'Internal server error processing resumes' },
+      { error: 'Internal server error', details: error instanceof Error ? error.message : String(error) },
       { status: 500 }
     );
   }
