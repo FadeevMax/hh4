@@ -92,14 +92,21 @@ export async function POST(request: NextRequest) {
     // 6. Сохранение данных
     let user = await UserModel.findByHhId(userData.id);
     if (!user) {
-      console.log('Token exchange: Creating new user');
-      user = await UserModel.createUser({
-        username: userData.email || `hh_${userData.id}`,
-        hhId: userData.id,
-        firstName: userData.first_name,
-        lastName: userData.last_name,
-        email: userData.email,
-      });
+      // Check for existing user by username/email (to avoid duplicate key error)
+      const usernameToCheck = userData.email || `hh_${userData.id}`;
+      user = await UserModel.findByUsername(usernameToCheck);
+      if (!user) {
+        console.log('Token exchange: Creating new user');
+        user = await UserModel.createUser({
+          username: usernameToCheck,
+          hhId: userData.id,
+          firstName: userData.first_name,
+          lastName: userData.last_name,
+          email: userData.email,
+        });
+      } else {
+        console.log('Token exchange: Found user by username/email, using existing user');
+      }
     }
 
     console.log('Token exchange: Saving tokens');
